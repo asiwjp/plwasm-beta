@@ -51,4 +51,14 @@ plwasm_wasm_pglib_command_execute(
     wasmtime_val_t *results,
     size_t nresults
 );
+
+wasm_trap_t*
+plwasm_wasm_pglib_command_close(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+);
 #endif

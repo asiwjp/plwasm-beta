@@ -169,3 +169,30 @@ plwasm_wasm_pglib_command_execute(
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }
+
+wasm_trap_t*
+plwasm_wasm_pglib_command_close(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.command_close";
+
+  plwasm_call_context_t		*cctx;
+  plwasm_pg_command_context_t	*cmdctx;
+  int				arg1_cmd_id;
+  int				result;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_cmd_id = args[0].of.i32;
+
+  cmdctx = plwasm_spi_command_get_context(cctx, arg1_cmd_id);
+  result = plwasm_spi_command_close(cctx, cmdctx);
+
+  results[0].of.i32 = result;
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}

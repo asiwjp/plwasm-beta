@@ -198,6 +198,16 @@ plwasm_wasm_pglib_init(
     1,
     wasm_valtype_new_i32());
 
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "command_close",
+    plwasm_wasm_pglib_command_close,
+    wasm_valtype_new_i32(),
+    1,
+    wasm_valtype_new_i32());
+
   /*
    * resultset api
    */

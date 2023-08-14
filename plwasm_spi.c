@@ -258,11 +258,13 @@ plwasm_spi_command_execute(
 	return cmdctx->processed;
 }
 
-void
+bool
 plwasm_spi_command_close(
 	plwasm_call_context_t *cctx,
 	plwasm_pg_command_context_t *cmdctx
 ) {
+	bool result = false;
+
 	CALL_DEBUG5(cctx, "SPI close command. text=%s", cmdctx->command_text);
 
 	if (plwasm_spi_resultset_is_opened(cctx, cmdctx)) {
@@ -272,8 +274,11 @@ plwasm_spi_command_close(
 	if (cmdctx->plan != NULL) {
 		SPI_freeplan(cmdctx->plan);
 		cmdctx->plan = NULL;
+		result = true;
 	}
-	cursor_context_init(cmdctx);
+
+	command_context_init(cmdctx);
+	return result;
 }
 
 bool

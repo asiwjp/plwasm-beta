@@ -60,7 +60,7 @@ plwasm_spi_command_execute(
 	int limit
 );
 
-void
+bool
 plwasm_spi_command_close(
 	plwasm_call_context_t *cctx,
 	plwasm_pg_command_context_t* cmdctx

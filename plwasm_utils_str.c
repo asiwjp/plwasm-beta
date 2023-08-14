@@ -108,7 +108,7 @@ char* plwasm_utils_str_enc_iconv(
   dest_begin = dest = (char*) palloc(dest_len + null_pad);
   memset(dest, 0, dest_len);
 
-  ereport(NOTICE,
+  ereport(DEBUG5,
     (errmsg("iconv %s to %s, src_len=%ld, dest_len=%ld, force_null_termination=%d",
       src_enc_name,
       dest_enc_name,
@@ -117,7 +117,7 @@ char* plwasm_utils_str_enc_iconv(
       (int)force_null_termination)));
   if (strncmp(src_enc_name, "UTF-16", 5) != 0) {
     strncpy(tmp, src, 1024);
-    ereport(NOTICE,
+    ereport(DEBUG5,
       (errmsg("iconv \"%s\" to %s",
         tmp,
         dest_enc_name
@@ -138,7 +138,7 @@ char* plwasm_utils_str_enc_iconv(
 
   converted_len = dest_len - dest_left;
   *converted_sz = converted_len + null_pad;
-  ereport(NOTICE,
+  ereport(DEBUG5,
     (errmsg("iconv success. converted=%ld(%ld), icd_res=%ld, dest_left=%ld",
       converted_len,
       *converted_sz,
@@ -199,7 +199,7 @@ char* plwasm_utils_str_enc(
   char *utf8;
   char *dest;
 
-  ereport(NOTICE, 
+  ereport(DEBUG5, 
     (errmsg("plwasm_utils_str_enc begin. from=%d, to=%d, src_len=%d", src_enc, dest_enc, src_len)));
 
   // TODO UTF16-UTF16
@@ -211,14 +211,14 @@ char* plwasm_utils_str_enc(
   }
 
   if (src_enc == -1) {
-    ereport(NOTICE, 
+    ereport(DEBUG5, 
       (errmsg("temporary convert to utf8")));
     utf8 = plwasm_utils_str_enc_utf16_to_utf8(
       src,
       src_len,
       true,
       converted_sz);
-    ereport(NOTICE, 
+    ereport(DEBUG5, 
       (errmsg("final convert to desired enc")));
     dest = plwasm_utils_str_enc(
       utf8, 
@@ -232,7 +232,7 @@ char* plwasm_utils_str_enc(
   }
 
   if (dest_enc == -1) {
-    ereport(NOTICE, 
+    ereport(DEBUG5, 
       (errmsg("temporary convert to utf8")));
     utf8 = plwasm_utils_str_enc(
       src, 
@@ -242,7 +242,7 @@ char* plwasm_utils_str_enc(
       false,
       converted_sz);
 
-    ereport(NOTICE, 
+    ereport(DEBUG5, 
       (errmsg("final convert to utf16")));
     dest = plwasm_utils_str_enc_utf8_to_utf16(
       utf8, 

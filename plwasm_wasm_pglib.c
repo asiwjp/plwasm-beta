@@ -113,26 +113,6 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "set_returns_text_utf8",
-    plwasm_wasm_pglib_set_returns_text_utf8,
-    2,
-    wasm_valtype_new_i32(),
-    wasm_valtype_new_i32());
-
-  plwasm_wasm_define_func_0(
-    ectx,
-    WASM_MODULE_NAME,
-    WASM_MODULE_NAME_LEN,
-    "set_returns_text_utf16",
-    plwasm_wasm_pglib_set_returns_text_utf16,
-    2,
-    wasm_valtype_new_i32(),
-    wasm_valtype_new_i32());
-
-  plwasm_wasm_define_func_0(
-    ectx,
-    WASM_MODULE_NAME,
-    WASM_MODULE_NAME_LEN,
     "set_returns_bytea_unsafe",
     plwasm_wasm_pglib_set_returns_bytea_unsafe,
     4,

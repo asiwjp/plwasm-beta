@@ -92,6 +92,8 @@ void
 plwasm_spi_finish(
 	plwasm_call_context_t *cctx
 ) {
+	plwasm_pg_command_context_t *cmd_it;
+	plwasm_pg_command_context_t *cmd_end;
 	CALL_DEBUG5(cctx, "SPI finish begin.");
 
 	if (!cctx->spi.connected) {
@@ -99,13 +101,10 @@ plwasm_spi_finish(
 		return;
 	}
 
-	if (SPI_finish() != SPI_OK_FINISH) {
-		CALL_ERROR(cctx, "SPI finish failed.");
-	}
-
 	if (cctx->spi.cmdctx_vec != NULL) {
-		plwasm_pg_command_context_t *cmd_it = cctx->spi.cmdctx_vec;
-		plwasm_pg_command_context_t *cmd_end = cmd_it + cctx->spi.cmdctx_vec_sz;
+		CALL_DEBUG5(cctx, "SPI command context release bgin.");
+		cmd_it = cctx->spi.cmdctx_vec;
+		cmd_end = cmd_it + cctx->spi.cmdctx_vec_sz;
 		for (; cmd_it < cmd_end; ++cmd_it) {
 			if (command_context_is_free(cmd_it)) {
 				continue;
@@ -113,11 +112,17 @@ plwasm_spi_finish(
 
 			plwasm_spi_command_close(cctx, cmd_it);	
 		}
+		CALL_DEBUG5(cctx, "SPI command context release end.");
 		pfree(cctx->spi.cmdctx_vec);
+		cctx->spi.cmdctx_vec_sz = 0;
+		cctx->spi.cmdctx_vec = NULL;
+		CALL_DEBUG5(cctx, "SPI command context vector release end.");
 	}
 
-	cctx->spi.cmdctx_vec_sz = 0;
-	cctx->spi.cmdctx_vec = NULL;
+	if (SPI_finish() != SPI_OK_FINISH) {
+		CALL_ERROR(cctx, "SPI finish failed.");
+	}
+
 	cctx->spi.connected = false;
 	CALL_DEBUG5(cctx, "SPI finished.");
 }

@@ -134,6 +134,8 @@ void plwasm_wasm_define_func_0(
     }
     va_end(va);
     wasm_valtype_vec_new(&params, argsn, ps);
+  } else {
+    wasm_valtype_vec_new_empty(&params);
   }
 
   wasm_valtype_vec_new_empty(&results);
@@ -169,6 +171,8 @@ void plwasm_wasm_define_func_1(
     }
     va_end(va);
     wasm_valtype_vec_new(&params, argsn, ps);
+  } else {
+    wasm_valtype_vec_new_empty(&params);
   }
 
   wasm_valtype_vec_new(&results, 1, rs);

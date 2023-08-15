@@ -48,7 +48,7 @@ wasm_trap_t* plwasm_wasm_pglib_log_unsafe(
   return NULL;
 }
 
-wasm_trap_t* plwasm_wasm_pglib_get_arg_int32(
+wasm_trap_t* plwasm_wasm_pglib_args_is_null(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -56,7 +56,36 @@ wasm_trap_t* plwasm_wasm_pglib_get_arg_int32(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char *FUNC_NAME = "pg.get_arg_int32";
+  char *FUNC_NAME = "pg.args_is_null";
+
+  plwasm_call_context_t *cctx;
+  FunctionCallInfo fcinfo;
+  int32_t arg1_pgarg_idx;
+  bool is_null;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  fcinfo = cctx->fcinfo;
+  arg1_pgarg_idx= args[0].of.i32;
+
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg1_pgarg_idx);
+
+  is_null = PG_ARGISNULL(arg1_pgarg_idx);
+
+  results[0].of.i32 = is_null ? 1 : 0;
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t* plwasm_wasm_pglib_args_get_int32(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.args_get_int32";
 
   plwasm_call_context_t *cctx;
   FunctionCallInfo fcinfo;
@@ -77,7 +106,7 @@ wasm_trap_t* plwasm_wasm_pglib_get_arg_int32(
   return NULL;
 }
 
-wasm_trap_t* plwasm_wasm_pglib_get_arg_text_unsafe(
+wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -85,7 +114,7 @@ wasm_trap_t* plwasm_wasm_pglib_get_arg_text_unsafe(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char *FUNC_NAME = "pg.get_arg_text_unsafe";
+  char *FUNC_NAME = "pg.args_get_text_unsafe";
 
   plwasm_call_context_t *cctx;
   FunctionCallInfo fcinfo;
@@ -135,7 +164,7 @@ wasm_trap_t* plwasm_wasm_pglib_get_arg_text_unsafe(
   return NULL;
 }
 
-wasm_trap_t* plwasm_wasm_pglib_get_arg_bytea_unsafe(
+wasm_trap_t* plwasm_wasm_pglib_args_get_bytea_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -143,7 +172,7 @@ wasm_trap_t* plwasm_wasm_pglib_get_arg_bytea_unsafe(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char *FUNC_NAME = "pg.get_arg_bytea_unsafe";
+  char *FUNC_NAME = "pg.args_get_bytea_unsafe";
 
   plwasm_call_context_t *cctx;
   FunctionCallInfo fcinfo;
@@ -184,7 +213,7 @@ wasm_trap_t* plwasm_wasm_pglib_get_arg_bytea_unsafe(
   return NULL;
 }
 
-wasm_trap_t* plwasm_wasm_pglib_set_returns_int32(
+wasm_trap_t* plwasm_wasm_pglib_returns_set_null(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -192,7 +221,26 @@ wasm_trap_t* plwasm_wasm_pglib_set_returns_int32(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char *FUNC_NAME = "pg.set_returns_int32";
+  char *FUNC_NAME = "pg.returns_set_null";
+
+  plwasm_call_context_t *cctx;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+
+  cctx->ret.type = VOIDOID;
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t* plwasm_wasm_pglib_returns_set_int32(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.returns_set_int32";
 
   plwasm_call_context_t *cctx;
   int32_t arg_retval;
@@ -206,7 +254,7 @@ wasm_trap_t* plwasm_wasm_pglib_set_returns_int32(
   return NULL;
 }
 
-wasm_trap_t* plwasm_wasm_pglib_set_returns_text_unsafe(
+wasm_trap_t* plwasm_wasm_pglib_returns_set_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -214,7 +262,7 @@ wasm_trap_t* plwasm_wasm_pglib_set_returns_text_unsafe(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char* FUNC_NAME = "pg.set_returns_text_unsafe";
+  char* FUNC_NAME = "pg.returns_set_text_unsafe";
 
   plwasm_call_context_t *cctx;
   size_t  mem_offset;
@@ -246,7 +294,7 @@ wasm_trap_t* plwasm_wasm_pglib_set_returns_text_unsafe(
   return NULL;
 }
 
-wasm_trap_t* plwasm_wasm_pglib_set_returns_bytea_unsafe(
+wasm_trap_t* plwasm_wasm_pglib_returns_set_bytea_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -254,7 +302,7 @@ wasm_trap_t* plwasm_wasm_pglib_set_returns_bytea_unsafe(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char *FUNC_NAME = "pg.set_returns_bytea_unsafe";
+  char *FUNC_NAME = "pg.returns_set_bytea_unsafe";
 
   plwasm_call_context_t *cctx;
   int    mem_idx;

@@ -78,6 +78,11 @@ plwasm_wasm_invoke(
   if (error != NULL || trap != NULL)
     CALL_WASM_ERROR(cctx, "failed to call function", error, trap);
 
+  if (cctx->ret.type == VOIDOID) {
+    CALL_DEBUG5(cctx, "%s return null", proname);
+    PG_RETURN_NULL();
+  }
+
   if (expect_ret_type != cctx->ret.type) {
     CALL_ERROR(cctx, "%s return type is missmatch.", proname);
   }

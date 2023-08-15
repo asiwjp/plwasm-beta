@@ -13,7 +13,7 @@ plwasm_wasm_pglib_log_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_get_arg_int32(
+plwasm_wasm_pglib_args_is_null(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -23,7 +23,7 @@ plwasm_wasm_pglib_get_arg_int32(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_get_arg_text_unsafe(
+plwasm_wasm_pglib_args_get_int32(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -33,7 +33,7 @@ plwasm_wasm_pglib_get_arg_text_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_get_arg_bytea_unsafe(
+plwasm_wasm_pglib_args_get_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -43,7 +43,7 @@ plwasm_wasm_pglib_get_arg_bytea_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_set_returns_int32(
+plwasm_wasm_pglib_args_get_bytea_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -53,7 +53,7 @@ plwasm_wasm_pglib_set_returns_int32(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_set_returns_text_unsafe(
+plwasm_wasm_pglib_returns_set_null(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -63,7 +63,27 @@ plwasm_wasm_pglib_set_returns_text_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_set_returns_bytea_unsafe(
+plwasm_wasm_pglib_returns_set_int32(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+);
+
+wasm_trap_t*
+plwasm_wasm_pglib_returns_set_text_unsafe(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+);
+
+wasm_trap_t*
+plwasm_wasm_pglib_returns_set_bytea_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,

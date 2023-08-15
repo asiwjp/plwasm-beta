@@ -56,8 +56,8 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "get_arg_int32",
-    plwasm_wasm_pglib_get_arg_int32,
+    "args_is_null",
+    plwasm_wasm_pglib_args_is_null,
     wasm_valtype_new_i32(),
     1,
     wasm_valtype_new_i32());
@@ -66,8 +66,18 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "get_arg_text_unsafe",
-    plwasm_wasm_pglib_get_arg_text_unsafe,
+    "args_get_int32",
+    plwasm_wasm_pglib_args_get_int32,
+    wasm_valtype_new_i32(),
+    1,
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "args_get_text_unsafe",
+    plwasm_wasm_pglib_args_get_text_unsafe,
     wasm_valtype_new_i32(),
     4,
     wasm_valtype_new_i32(),
@@ -79,8 +89,8 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "get_arg_bytea_unsafe",
-    plwasm_wasm_pglib_get_arg_bytea_unsafe,
+    "args_get_bytea_unsafe",
+    plwasm_wasm_pglib_args_get_bytea_unsafe,
     wasm_valtype_new_i32(),
     6,
     wasm_valtype_new_i32(),
@@ -94,8 +104,16 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "set_returns_int32",
-    plwasm_wasm_pglib_set_returns_int32,
+    "returns_set_null",
+    plwasm_wasm_pglib_returns_set_null,
+    0);
+
+  plwasm_wasm_define_func_0(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "returns_set_int32",
+    plwasm_wasm_pglib_returns_set_int32,
     1,
     wasm_valtype_new_i32());
 
@@ -103,8 +121,8 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "set_returns_text_unsafe",
-    plwasm_wasm_pglib_set_returns_text_unsafe,
+    "returns_set_text_unsafe",
+    plwasm_wasm_pglib_returns_set_text_unsafe,
     2,
     wasm_valtype_new_i32(),
     wasm_valtype_new_i32());
@@ -113,8 +131,8 @@ plwasm_wasm_pglib_init(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "set_returns_bytea_unsafe",
-    plwasm_wasm_pglib_set_returns_bytea_unsafe,
+    "returns_set_bytea_unsafe",
+    plwasm_wasm_pglib_returns_set_bytea_unsafe,
     4,
     wasm_valtype_new_i32(),
     wasm_valtype_new_i32(),

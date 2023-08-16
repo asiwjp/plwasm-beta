@@ -14,6 +14,7 @@ plwasm_wasm_mem_get_string(
 	cctx, offset, sz, true, NULL);
 
   return plwasm_utils_str_enc(
+    cctx,
     arg_cmd_txt,
     sz,
     cctx->func_config.string_enc,
@@ -35,6 +36,7 @@ plwasm_wasm_mem_put_cstring(
   size_t encoded_sz;
 
   encoded = plwasm_utils_str_enc(
+    cctx,
     cstr,
     cstr_sz, 
     GetDatabaseEncoding(),

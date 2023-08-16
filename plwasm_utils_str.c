@@ -4,6 +4,7 @@
 #include <string.h>
 #include <mb/pg_wchar.h>
 #include <iconv.h>
+#include "plwasm_log.h"
 
 char* plwasm_utils_str_enc_iconv(
   const char *src,
@@ -188,6 +189,7 @@ char* plwasm_utils_str_enc_utf8_to_utf16(
 }
 
 char* plwasm_utils_str_enc(
+  plwasm_call_context_t *cctx,
   const char *src,
   int src_len,
   int src_enc,
@@ -195,32 +197,32 @@ char* plwasm_utils_str_enc(
   bool force_null_termination,
   size_t *converted_sz
 ) {
-
+  const char *FUNC_NAME = "plwasm_utils_str_enc";
   char *utf8;
   char *dest;
 
-  ereport(DEBUG5, 
-    (errmsg("plwasm_utils_str_enc begin. from=%d, to=%d, src_len=%d", src_enc, dest_enc, src_len)));
+  CALL_DEBUG5(cctx,
+    "%s begin. from=%d, to=%d, src_len=%d, force_null_termiation=%d",
+    FUNC_NAME, src_enc, dest_enc, src_len, force_null_termination);
 
   // TODO UTF16-UTF16
 
   if (dest_enc == src_enc) {
+    CALL_DEBUG5(cctx, "%s skip.", FUNC_NAME);
     dest = pnstrdup(src, src_len); // add null termination
     *converted_sz = strlen(dest) + 1;
     return dest;
   }
 
   if (src_enc == -1) {
-    ereport(DEBUG5, 
-      (errmsg("temporary convert to utf8")));
+    CALL_DEBUG5(cctx, "%s Performs intermediate conversion to UTF8.", FUNC_NAME);
     utf8 = plwasm_utils_str_enc_utf16_to_utf8(
       src,
       src_len,
       true,
       converted_sz);
-    ereport(DEBUG5, 
-      (errmsg("final convert to desired enc")));
     dest = plwasm_utils_str_enc(
+      cctx,
       utf8, 
       strlen(utf8), 
       PG_UTF8,
@@ -232,9 +234,9 @@ char* plwasm_utils_str_enc(
   }
 
   if (dest_enc == -1) {
-    ereport(DEBUG5, 
-      (errmsg("temporary convert to utf8")));
+    CALL_DEBUG5(cctx, "%s Performs intermediate conversion to UTF8.", FUNC_NAME);
     utf8 = plwasm_utils_str_enc(
+      cctx,
       src, 
       src_len,
       src_enc,
@@ -242,8 +244,6 @@ char* plwasm_utils_str_enc(
       false,
       converted_sz);
 
-    ereport(DEBUG5, 
-      (errmsg("final convert to utf16")));
     dest = plwasm_utils_str_enc_utf8_to_utf16(
       utf8, 
       *converted_sz - 1, // nil char
@@ -259,6 +259,10 @@ char* plwasm_utils_str_enc(
     src_enc,
     dest_enc);
   *converted_sz = strlen(dest) + 1;
+
+  CALL_DEBUG5(cctx,
+    "%s success. from=%d, to=%d, src_len=%d, force_null_termiation=%d",
+    FUNC_NAME, src_enc, dest_enc, src_len, force_null_termination);
   return dest;
 }
 

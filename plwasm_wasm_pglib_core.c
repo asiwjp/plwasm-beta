@@ -35,6 +35,7 @@ wasm_trap_t* plwasm_wasm_pglib_log_unsafe(
   arg_str = plwasm_wasm_mem_offset(cctx, mem_offset, arg_str_sz, true, NULL);
 
   converted = plwasm_utils_str_enc(
+    cctx,
     arg_str,
     arg_str_sz,
     cctx->func_config.string_enc,
@@ -142,6 +143,7 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
   pgarg_cstr = text_to_cstring(pgarg_txt);
   pgarg_cstrlen = strlen(pgarg_cstr);
   pgarg_cstr_encoded = plwasm_utils_str_enc(
+    cctx,
     pgarg_cstr,
     pgarg_cstrlen, 
     GetDatabaseEncoding(),
@@ -278,6 +280,7 @@ wasm_trap_t* plwasm_wasm_pglib_returns_set_text_unsafe(
   arg_str = plwasm_wasm_mem_offset(cctx, mem_offset, arg_str_sz, true, NULL);
 
   ret_str = plwasm_utils_str_enc(
+    cctx,
     arg_str,
     arg_str_sz,
     cctx->func_config.string_enc,

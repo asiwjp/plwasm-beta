@@ -5,7 +5,6 @@
 #include "plwasm_wasm_memory.h"
 #include "plwasm_wasm_utils.h"
 #include "plwasm_utils_pg.h"
-#include "plwasm_utils_str.h"
 #include "plwasm_log.h"
 #include <postgres.h>
 #include <mb/pg_wchar.h>

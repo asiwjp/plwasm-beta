@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "plwasm_types.h"
 
 bool plwasm_utils_str_eq_safe(
   const char *str1,
@@ -26,6 +27,7 @@ bool plwasm_utils_str_endsWithN_safe(
 );
 
 char* plwasm_utils_str_enc(
+  plwasm_call_context_t *cctx,
   const char *str,
   int str_len,
   int src_enc,

@@ -89,6 +89,14 @@ plwasm_wasm_pglib_resultset_get_int32(
 
   cmdctx = plwasm_spi_command_get_context(cctx, arg1_cmd_id);
   val = plwasm_spi_resultset_get_val_as(cctx, cmdctx, arg2_fld_idx, INT4OID, &is_null);
+  if (is_null) {
+    CALL_ERROR(
+      cctx,
+      "%s column value is null. command_index=%d, field_index=%d",
+      FUNC_NAME,
+      arg1_cmd_id,
+      arg2_fld_idx);
+  }
 
   results[0].of.i32 = DatumGetInt32(val);
 
@@ -132,7 +140,7 @@ plwasm_wasm_pglib_resultset_get_text_unsafe(
   if (is_null) {
     CALL_ERROR(
       cctx,
-      "%s column is null. command_index=%d, field_index=%d",
+      "%s column value is null. command_index=%d, field_index=%d",
       FUNC_NAME,
       arg3_cmd_id,
       arg4_fld_idx);

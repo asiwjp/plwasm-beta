@@ -70,7 +70,7 @@ plwasm_wasm_invoke(
     &run);
   plwasm_log_stopwatch_save(cctx, cctx->times.func_find_ended);
   if (!ok)
-    elog(ERROR, "failed to get_export. expected function was not found.");
+    CALL_ERROR(cctx, "expected function was not found. name=%s", cctx->func_config.func_name);
 
   trap = NULL;
   error = wasmtime_func_call(cctx->rt.context, &run.of.func, NULL, 0, results, nresults, &trap);

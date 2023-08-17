@@ -228,7 +228,6 @@ plwasm_wasm_pglib_init(
     1,
     wasm_valtype_new_i32());
 
-
   plwasm_wasm_define_func_1(
     ectx,
     WASM_MODULE_NAME,
@@ -237,6 +236,19 @@ plwasm_wasm_pglib_init(
     plwasm_wasm_pglib_resultset_get_int32,
     wasm_valtype_new_i32(),
     2,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "resultset_get_text_unsafe",
+    plwasm_wasm_pglib_resultset_get_text_unsafe,
+    wasm_valtype_new_i32(),
+    4,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32(),
     wasm_valtype_new_i32(),
     wasm_valtype_new_i32());
 

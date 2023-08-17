@@ -5,6 +5,7 @@
 #include "plwasm_utils_pg.h"
 #include "plwasm_utils_str.h"
 #include "plwasm_log.h"
+#include <mb/pg_wchar.h>
 
 #define WASM_MODULE_NAME "pg"
 
@@ -90,6 +91,74 @@ plwasm_wasm_pglib_resultset_get_int32(
   val = plwasm_spi_resultset_get_val_as(cctx, cmdctx, arg2_fld_idx, INT4OID, &is_null);
 
   results[0].of.i32 = DatumGetInt32(val);
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t*
+plwasm_wasm_pglib_resultset_get_text_unsafe(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.resultset_get_text_unsafe";
+
+  plwasm_call_context_t	*cctx;
+  plwasm_pg_command_context_t	*cmdctx;
+  int		arg1_mem_idx;
+  int		arg2_mem_sz;
+  int		arg3_cmd_id;
+  int		arg4_fld_idx;
+  Datum		val;
+  bool		is_null;
+  char		*mem_ptr;
+  char		*val_cstr;
+  int		val_cstr_len;
+  char		*val_cstr_encoded;
+  size_t	val_cstr_encoded_sz;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_mem_idx = args[0].of.i32;
+  arg2_mem_sz = args[1].of.i32;
+  arg3_cmd_id  = args[2].of.i32;
+  arg4_fld_idx = args[3].of.i32;
+
+  cmdctx = plwasm_spi_command_get_context(cctx, arg3_cmd_id);
+  val = plwasm_spi_resultset_get_val_as(cctx, cmdctx, arg4_fld_idx, TEXTOID, &is_null);
+  if (is_null) {
+    CALL_ERROR(
+      cctx,
+      "%s column is null. command_index=%d, field_index=%d",
+      FUNC_NAME,
+      arg3_cmd_id,
+      arg4_fld_idx);
+  }
+
+  val_cstr = text_to_cstring(DatumGetTextP(val));
+  val_cstr_len = strlen(val_cstr);
+  val_cstr_encoded = plwasm_utils_str_enc(
+    cctx,
+    val_cstr,
+    val_cstr_len, 
+    GetDatabaseEncoding(),
+    cctx->func_config.string_enc,
+    false,
+    &val_cstr_encoded_sz);
+  if (arg2_mem_sz < val_cstr_len) {
+    CALL_ERROR(cctx,
+      "%s failed. buffer too small. buffer size=%d, required=%d",
+      FUNC_NAME, arg2_mem_sz, val_cstr_len);
+  }
+
+  mem_ptr = plwasm_wasm_mem_offset(cctx, arg1_mem_idx, arg2_mem_sz, true, NULL);
+  memcpy(mem_ptr, val_cstr_encoded, val_cstr_encoded_sz);
+  pfree(val_cstr);
+
+  results[0].of.i32 = val_cstr_encoded_sz;
 
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;

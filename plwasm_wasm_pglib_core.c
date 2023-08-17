@@ -7,8 +7,6 @@
 #include <postgres.h>
 #include <mb/pg_wchar.h>
 
-#include <iconv.h>
-
 wasm_trap_t* plwasm_wasm_pglib_log_unsafe(
     void *env,
     wasmtime_caller_t *caller,
@@ -20,30 +18,23 @@ wasm_trap_t* plwasm_wasm_pglib_log_unsafe(
   char *FUNC_NAME = "pg.log_unsafe";
 
   plwasm_call_context_t *cctx;
-  int    log_level;
-  int    mem_offset;
-  size_t arg_str_sz;
+  int    arg1_log_level;
+  int    arg2_mem_idx;
+  size_t arg3_str_sz;
   char   *arg_str;
-  char   *converted;
-  size_t converted_sz;
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
-  log_level = args[0].of.i32;
-  mem_offset = args[1].of.i32;
-  arg_str_sz = args[2].of.i32;
+  arg1_log_level = args[0].of.i32;
+  arg2_mem_idx = args[1].of.i32;
+  arg3_str_sz = args[2].of.i32;
 
-  arg_str = plwasm_wasm_mem_offset(cctx, mem_offset, arg_str_sz, true, NULL);
-
-  converted = plwasm_utils_str_enc(
+  arg_str = plwasm_wasm_mem_get_string(
     cctx,
-    arg_str,
-    arg_str_sz,
-    cctx->func_config.string_enc,
-    GetDatabaseEncoding(),
-    true,
-    &converted_sz);
+    arg2_mem_idx,
+    arg3_str_sz);
 
-  CALL_INFO(cctx, "%s", converted);
+  CALL_INFO(cctx, "%s", arg_str);
+  pfree(arg_str);
 
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
@@ -90,16 +81,16 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_int32(
 
   plwasm_call_context_t *cctx;
   FunctionCallInfo fcinfo;
-  int32_t pgarg_idx;
+  int32_t arg1_pgarg_idx;
   int32_t pgarg_int;
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
   fcinfo = cctx->fcinfo;
-  pgarg_idx= args[0].of.i32;
+  arg1_pgarg_idx= args[0].of.i32;
 
-  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, pgarg_idx);
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg1_pgarg_idx);
 
-  pgarg_int = PG_GETARG_INT32(pgarg_idx);
+  pgarg_int = PG_GETARG_INT32(arg1_pgarg_idx);
 
   results[0].of.i32 = pgarg_int;
 
@@ -119,10 +110,10 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
 
   plwasm_call_context_t *cctx;
   FunctionCallInfo fcinfo;
-  int32_t mem_idx;
-  int32_t mem_sz;
-  int32_t pgarg_idx;
-  int32_t pgarg_cp_sz;
+  int32_t arg1_mem_idx;
+  int32_t arg2_mem_sz;
+  int32_t arg3_pgarg_idx;
+  int32_t arg4_pgarg_cp_sz;
   char *mem_ptr;
   text *pgarg_txt;
   char *pgarg_cstr;
@@ -132,14 +123,14 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
   fcinfo = cctx->fcinfo;
-  mem_idx = args[0].of.i32;
-  mem_sz = args[1].of.i32;
-  pgarg_idx= args[2].of.i32;
-  pgarg_cp_sz= args[3].of.i32;
+  arg1_mem_idx = args[0].of.i32;
+  arg2_mem_sz = args[1].of.i32;
+  arg3_pgarg_idx= args[2].of.i32;
+  arg4_pgarg_cp_sz= args[3].of.i32;
 
-  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, pgarg_idx);
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg3_pgarg_idx);
 
-  pgarg_txt = PG_GETARG_TEXT_PP(pgarg_idx);
+  pgarg_txt = PG_GETARG_TEXT_PP(arg3_pgarg_idx);
   pgarg_cstr = text_to_cstring(pgarg_txt);
   pgarg_cstrlen = strlen(pgarg_cstr);
   pgarg_cstr_encoded = plwasm_utils_str_enc(
@@ -150,13 +141,13 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
     cctx->func_config.string_enc,
     false,
     &pgarg_cstr_encoded_sz);
-  if (mem_sz < pgarg_cstrlen) {
+  if (arg2_mem_sz < pgarg_cstrlen) {
     CALL_ERROR(cctx,
       "%s failed. buffer too small. buffer size=%d, required=%d",
-      FUNC_NAME, mem_sz, pgarg_cstrlen);
+      FUNC_NAME, arg2_mem_sz, pgarg_cstrlen);
   }
 
-  mem_ptr = plwasm_wasm_mem_offset(cctx, mem_idx, pgarg_cp_sz, true, NULL);
+  mem_ptr = plwasm_wasm_mem_offset(cctx, arg1_mem_idx, arg4_pgarg_cp_sz, true, NULL);
   memcpy(mem_ptr, pgarg_cstr_encoded, pgarg_cstr_encoded_sz);
   pfree(pgarg_cstr);
 
@@ -178,38 +169,38 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_bytea_unsafe(
 
   plwasm_call_context_t *cctx;
   FunctionCallInfo fcinfo;
-  int32_t mem_idx;
-  int32_t mem_sz;
-  int32_t mem_offset;
-  int32_t pgarg_idx;
-  int32_t bytea_offset;
-  int32_t n;
+  int32_t arg1_mem_idx;
+  int32_t arg2_mem_sz;
+  int32_t arg3_mem_offset;
+  int32_t arg4_pgarg_idx;
+  int32_t arg5_bytea_offset;
+  int32_t arg6_n;
   char *mem_ptr;
   int32_t tmp_bytea_sz;
   bytea *tmp_bytea;
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
   fcinfo = cctx->fcinfo;
-  mem_idx = args[0].of.i32;
-  mem_sz = args[1].of.i32;
-  mem_offset = args[2].of.i32;
-  pgarg_idx= args[3].of.i32;
-  bytea_offset = args[4].of.i32;
-  n = args[5].of.i32;
+  arg1_mem_idx = args[0].of.i32;
+  arg2_mem_sz = args[1].of.i32;
+  arg3_mem_offset = args[2].of.i32;
+  arg4_pgarg_idx= args[3].of.i32;
+  arg5_bytea_offset = args[4].of.i32;
+  arg6_n = args[5].of.i32;
 
-  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, pgarg_idx);
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg4_pgarg_idx);
 
-  tmp_bytea = PG_GETARG_BYTEA_PP(pgarg_idx);
+  tmp_bytea = PG_GETARG_BYTEA_PP(arg4_pgarg_idx);
   tmp_bytea_sz = VARSIZE(tmp_bytea);
-  if (n == -1) {
-    n = tmp_bytea_sz;
+  if (arg6_n == -1) {
+    arg6_n = tmp_bytea_sz;
   }
-  mem_ptr = plwasm_wasm_mem_offset(cctx, mem_idx + mem_offset, n, true, NULL);
-  tmp_bytea = PG_GETARG_BYTEA_P_SLICE(pgarg_idx, bytea_offset, n);
+  mem_ptr = plwasm_wasm_mem_offset(cctx, arg1_mem_idx + arg3_mem_offset, arg6_n, true, NULL);
+  tmp_bytea = PG_GETARG_BYTEA_P_SLICE(arg4_pgarg_idx, arg5_bytea_offset, arg6_n);
 
-  memcpy(mem_ptr, VARDATA(tmp_bytea), n);
+  memcpy(mem_ptr, VARDATA(tmp_bytea), arg6_n);
 
-  results[0].of.i32 = n;
+  results[0].of.i32 = arg6_n;
 
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
@@ -245,13 +236,13 @@ wasm_trap_t* plwasm_wasm_pglib_returns_set_int32(
   char *FUNC_NAME = "pg.returns_set_int32";
 
   plwasm_call_context_t *cctx;
-  int32_t arg_retval;
+  int32_t arg1_retval;
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
-  arg_retval = args[0].of.i32;
+  arg1_retval = args[0].of.i32;
 
   cctx->ret.type = INT4OID;
-  cctx->ret.of.i32 = arg_retval;
+  cctx->ret.of.i32 = arg1_retval;
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }
@@ -267,32 +258,21 @@ wasm_trap_t* plwasm_wasm_pglib_returns_set_text_unsafe(
   char* FUNC_NAME = "pg.returns_set_text_unsafe";
 
   plwasm_call_context_t *cctx;
-  size_t  mem_offset;
+  size_t arg1_mem_idx;
+  size_t arg2_str_sz;
   char   *arg_str;
-  size_t arg_str_sz;
-  size_t converted_sz;
-  char   *ret_str;
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
-  mem_offset = args[0].of.i32;
-  arg_str_sz = args[1].of.i32;
+  arg1_mem_idx = args[0].of.i32;
+  arg2_str_sz = args[1].of.i32;
 
-  arg_str = plwasm_wasm_mem_offset(cctx, mem_offset, arg_str_sz, true, NULL);
-
-  ret_str = plwasm_utils_str_enc(
+  arg_str = plwasm_wasm_mem_get_string(
     cctx,
-    arg_str,
-    arg_str_sz,
-    cctx->func_config.string_enc,
-    GetDatabaseEncoding(),
-    true,
-    &converted_sz);
+    arg1_mem_idx,
+    arg2_str_sz);
 
   cctx->ret.type = TEXTOID;
-  cctx->ret.of.text = cstring_to_text(ret_str);
-  CALL_DEBUG5(cctx,
-    "%s Set the return value to \"%s\"",
-    FUNC_NAME, VARDATA(cctx->ret.of.text));
+  cctx->ret.of.text = cstring_to_text(arg_str);
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }
@@ -308,28 +288,23 @@ wasm_trap_t* plwasm_wasm_pglib_returns_set_bytea_unsafe(
   char *FUNC_NAME = "pg.returns_set_bytea_unsafe";
 
   plwasm_call_context_t *cctx;
-  int    mem_idx;
-  int    mem_offset;
-  int    n;
+  int    arg1_mem_idx;
+  int    arg2_mem_offset;
+  int    arg3_n;
   char   *mem_ptr;
   bytea  *ret_bytea;
 
   cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
-  mem_idx = args[0].of.i32;
-  mem_offset = args[1].of.i32;
-  n = args[2].of.i32;
+  arg1_mem_idx = args[0].of.i32;
+  arg2_mem_offset = args[1].of.i32;
+  arg3_n = args[2].of.i32;
 
-  mem_ptr = plwasm_wasm_mem_offset(cctx, mem_idx + mem_offset, n, true, NULL);
-  ret_bytea = palloc((Size)n + VARHDRSZ);
-  memcpy(VARDATA(ret_bytea), mem_ptr, n);
+  mem_ptr = plwasm_wasm_mem_offset(cctx, arg1_mem_idx + arg2_mem_offset, arg3_n, true, NULL);
+  ret_bytea = palloc((Size)arg3_n + VARHDRSZ);
+  memcpy(VARDATA(ret_bytea), mem_ptr, arg3_n);
 
   cctx->ret.type = BYTEAOID;
   cctx->ret.of.bytea = ret_bytea;
-
-  CALL_DEBUG5(cctx, 
-    "%s return void. Set the return value of proc to BYTEA(%d)",
-    FUNC_NAME,
-    VARSIZE(cctx->ret.of.bytea));
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }

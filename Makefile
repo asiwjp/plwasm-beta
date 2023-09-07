@@ -18,6 +18,7 @@ OBJS = \
   plwasm_utils_pg.o \
   plwasm_utils_str.o \
   plwasm_func_body.o \
+  plwasm_context.o \
   plwasm_handler.o
 PGFILEDESC = "PL/wasm"
 

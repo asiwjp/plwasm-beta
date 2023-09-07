@@ -7,7 +7,6 @@ void plwasm_wasm_engine_new(plwasm_extension_context_t *ectx) {
   HASHCTL hsctl_modules;
   HASHCTL hsctl_instances;
 
-  ectx->type = plwasm_CTX_TYPE_EXTENSION;
   ectx->engine = wasm_engine_new();
   if (ectx->engine == NULL)
     elog(ERROR, "wasm_engine_new failed.");
@@ -53,7 +52,6 @@ void plwasm_wasm_engine_new(plwasm_extension_context_t *ectx) {
 	HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
   // load shared modules
-  ectx->modules.pg = NULL;
   plwasm_wasm_pglib_load(ectx);
 
   ereport(DEBUG1, (errmsg("wasm engine created.")));

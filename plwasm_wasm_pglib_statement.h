@@ -23,7 +23,7 @@ plwasm_wasm_pglib_query_text_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_command_create_unsafe(
+plwasm_wasm_pglib_statement_create_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -33,7 +33,7 @@ plwasm_wasm_pglib_command_create_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_command_prepare(
+plwasm_wasm_pglib_statement_prepare(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -43,7 +43,7 @@ plwasm_wasm_pglib_command_prepare(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_command_execute(
+plwasm_wasm_pglib_statement_execute(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -53,7 +53,7 @@ plwasm_wasm_pglib_command_execute(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_command_close(
+plwasm_wasm_pglib_statement_close(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,

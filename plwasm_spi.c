@@ -3,7 +3,7 @@
 #include "plwasm_utils_pg.h"
 #include "mb/pg_wchar.h"
 
-#define COMMAND_CONTEXT_VEC_SZ 32
+#define STATEMENT_CONTEXT_VEC_SZ 32
 
 /*
  * Declare functions
@@ -15,55 +15,55 @@ spi_abort(
 	ResourceOwner oldowner
 );
 
-static plwasm_pg_command_context_t*
-command_context_vec_create(
+static plwasm_pg_statement_context_t*
+statement_context_vec_create(
 	int sz
 );
 
-static plwasm_pg_command_context_t*
-command_context_vec_find_free(
+static plwasm_pg_statement_context_t*
+statement_context_vec_find_free(
 	plwasm_call_context_t *cctx
 );
 
 static
-plwasm_pg_command_context_t*
-command_context_vec_get(
+plwasm_pg_statement_context_t*
+statement_context_vec_get(
 	plwasm_call_context_t *cctx,
-	int cmd_id
+	int stmt_id
 );
 
 static
 bool
-command_context_is_free(
-	plwasm_pg_command_context_t *cmdctx
+statement_context_is_free(
+	plwasm_pg_statement_context_t *stmctx
 );
 
 static void
 cursor_context_init(
-  plwasm_pg_command_context_t *cmdctx
+  plwasm_pg_statement_context_t *stmctx
 );
 
 static void
-command_context_init(
-  plwasm_pg_command_context_t *cmdctx
+statement_context_init(
+  plwasm_pg_statement_context_t *stmctx
 );
 
 static void
 check_resultset_ready(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 );
 
 static void
 check_resultset_fetch_status(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 );
 
 static Form_pg_attribute
 get_att_desc(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx,
+	plwasm_pg_statement_context_t *stmctx,
 	int att_idx
 );
 
@@ -83,8 +83,8 @@ plwasm_spi_ready(
 	}
 
 	cctx->spi.connected = true;
-	cctx->spi.cmdctx_vec = NULL;
-	cctx->spi.cmdctx_vec_sz = 0;
+	cctx->spi.stmctx_vec = NULL;
+	cctx->spi.stmctx_vec_sz = 0;
 	CALL_DEBUG5(cctx, "SPI connected.");
 }
 
@@ -92,8 +92,8 @@ void
 plwasm_spi_finish(
 	plwasm_call_context_t *cctx
 ) {
-	plwasm_pg_command_context_t *cmd_it;
-	plwasm_pg_command_context_t *cmd_end;
+	plwasm_pg_statement_context_t *stmt_it;
+	plwasm_pg_statement_context_t *stmt_end;
 	CALL_DEBUG5(cctx, "SPI finish begin.");
 
 	if (!cctx->spi.connected) {
@@ -101,22 +101,22 @@ plwasm_spi_finish(
 		return;
 	}
 
-	if (cctx->spi.cmdctx_vec != NULL) {
-		CALL_DEBUG5(cctx, "SPI command context release bgin.");
-		cmd_it = cctx->spi.cmdctx_vec;
-		cmd_end = cmd_it + cctx->spi.cmdctx_vec_sz;
-		for (; cmd_it < cmd_end; ++cmd_it) {
-			if (command_context_is_free(cmd_it)) {
+	if (cctx->spi.stmctx_vec != NULL) {
+		CALL_DEBUG5(cctx, "SPI statement context release bgin.");
+		stmt_it = cctx->spi.stmctx_vec;
+		stmt_end = stmt_it + cctx->spi.stmctx_vec_sz;
+		for (; stmt_it < stmt_end; ++stmt_it) {
+			if (statement_context_is_free(stmt_it)) {
 				continue;
 			}
 
-			plwasm_spi_command_close(cctx, cmd_it);	
+			plwasm_spi_statement_close(cctx, stmt_it);	
 		}
-		CALL_DEBUG5(cctx, "SPI command context release end.");
-		pfree(cctx->spi.cmdctx_vec);
-		cctx->spi.cmdctx_vec_sz = 0;
-		cctx->spi.cmdctx_vec = NULL;
-		CALL_DEBUG5(cctx, "SPI command context vector release end.");
+		CALL_DEBUG5(cctx, "SPI statement context release end.");
+		pfree(cctx->spi.stmctx_vec);
+		cctx->spi.stmctx_vec_sz = 0;
+		cctx->spi.stmctx_vec = NULL;
+		CALL_DEBUG5(cctx, "SPI statement context vector release end.");
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH) {
@@ -169,49 +169,49 @@ plwasm_spi_err_capture(
 	return edata;
 }
 
-plwasm_pg_command_context_t*
-plwasm_spi_command_create(
+plwasm_pg_statement_context_t*
+plwasm_spi_statement_create(
   plwasm_call_context_t *cctx,
-  char *command
+  char *statement
 ) {
-	plwasm_pg_command_context_t	*cmdctx;
+	plwasm_pg_statement_context_t	*stmctx;
 
-	CALL_DEBUG5(cctx, "SPI create command. text=%s", command);
+	CALL_DEBUG5(cctx, "SPI create statement. text=%s", statement);
 
-	pg_verifymbstr(command, strlen(command), false);
+	pg_verifymbstr(statement, strlen(statement), false);
 
-	if (cctx->spi.cmdctx_vec == NULL) {
-        	cctx->spi.cmdctx_vec = command_context_vec_create(COMMAND_CONTEXT_VEC_SZ);
-		cctx->spi.cmdctx_vec_sz = COMMAND_CONTEXT_VEC_SZ;
+	if (cctx->spi.stmctx_vec == NULL) {
+        	cctx->spi.stmctx_vec = statement_context_vec_create(STATEMENT_CONTEXT_VEC_SZ);
+		cctx->spi.stmctx_vec_sz = STATEMENT_CONTEXT_VEC_SZ;
 	}
 
-	cmdctx = command_context_vec_find_free(cctx);
-	cmdctx->command_text = command;
+	stmctx = statement_context_vec_find_free(cctx);
+	stmctx->statement_text = statement;
 
-	CALL_DEBUG5(cctx, "SPI create command success. text=%s", command);
-	return cmdctx;
+	CALL_DEBUG5(cctx, "SPI create statement success. text=%s", statement);
+	return stmctx;
 }
 
-plwasm_pg_command_context_t*
-plwasm_spi_command_get_context(
+plwasm_pg_statement_context_t*
+plwasm_spi_statement_get_context(
   plwasm_call_context_t *cctx,
-  int cmd_id
+  int stmt_id
 ) {
-	return command_context_vec_get(cctx, cmd_id);
+	return statement_context_vec_get(cctx, stmt_id);
 }
 
 void
-plwasm_spi_command_prepare(
+plwasm_spi_statement_prepare(
   plwasm_call_context_t *cctx,
-  plwasm_pg_command_context_t *cmdctx
+  plwasm_pg_statement_context_t *stmctx
 ) {
 	int				spi_rv;
 	SPIPlanPtr			plan;
 	bool				is_cursor_plan;
 
-	CALL_DEBUG5(cctx, "SPI prepare command. text=%s", cmdctx->command_text);
+	CALL_DEBUG5(cctx, "SPI prepare statement. text=%s", stmctx->statement_text);
 
-	plan = SPI_prepare(cmdctx->command_text, 0, NULL);
+	plan = SPI_prepare(stmctx->statement_text, 0, NULL);
 	spi_rv = SPI_result;
 	if (spi_rv < 0) {
         	CALL_ERROR(cctx, "SPI prepare failed. reason=%s",
@@ -219,144 +219,144 @@ plwasm_spi_command_prepare(
         }
 	is_cursor_plan = SPI_is_cursor_plan(plan);
 	if (!is_cursor_plan) {
-		CALL_ERROR(cctx, "command is not query.");
+		CALL_ERROR(cctx, "statement is not query.");
 	}
-	CALL_DEBUG5(cctx, "SPI prepare command success.");
+	CALL_DEBUG5(cctx, "SPI prepare statement success.");
 
-        cmdctx->status = spi_rv;
-        cmdctx->plan = plan;
-        cmdctx->plan_is_query = is_cursor_plan;
-	cursor_context_init(cmdctx);
+        stmctx->status = spi_rv;
+        stmctx->plan = plan;
+        stmctx->plan_is_query = is_cursor_plan;
+	cursor_context_init(stmctx);
 }
 
 uint64_t
-plwasm_spi_command_execute(
+plwasm_spi_statement_execute(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx,
+	plwasm_pg_statement_context_t *stmctx,
 	int limit
 ) {
 	int				spi_rv;
 
-	CALL_DEBUG5(cctx, "SPI execute command. text=%s", cmdctx->command_text);
+	CALL_DEBUG5(cctx, "SPI execute statement. text=%s", stmctx->statement_text);
 
-	if (cmdctx->cursor.portal != NULL) {
+	if (stmctx->cursor.portal != NULL) {
 		CALL_ERROR(cctx, "cursor is active.");
 	}
 
-	spi_rv = SPI_execute_plan(cmdctx->plan, NULL, NULL, cmdctx->plan_is_query, limit);
+	spi_rv = SPI_execute_plan(stmctx->plan, NULL, NULL, stmctx->plan_is_query, limit);
 	if (spi_rv < 0) {
         	CALL_ERROR(cctx, "SPI execute_plan failed. reason=%s",
 			SPI_result_code_string(spi_rv));
         }
 
-	cursor_context_init(cmdctx);
-        cmdctx->status = spi_rv;
+	cursor_context_init(stmctx);
+        stmctx->status = spi_rv;
 
-	if (cmdctx->plan_is_query) {
-		cmdctx->cursor.portal = SPI_cursor_open(NULL, cmdctx->plan, NULL, NULL, true);
-		cmdctx->processed = 0;
-		CALL_DEBUG5(cctx, "SPI cursor opened. text=%s", cmdctx->command_text);
+	if (stmctx->plan_is_query) {
+		stmctx->cursor.portal = SPI_cursor_open(NULL, stmctx->plan, NULL, NULL, true);
+		stmctx->processed = 0;
+		CALL_DEBUG5(cctx, "SPI cursor opened. text=%s", stmctx->statement_text);
 	} else {
-        	cmdctx->cursor.portal = NULL;
-		cmdctx->processed = SPI_processed;
+        	stmctx->cursor.portal = NULL;
+		stmctx->processed = SPI_processed;
 	}
-	return cmdctx->processed;
+	return stmctx->processed;
 }
 
 bool
-plwasm_spi_command_close(
+plwasm_spi_statement_close(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
 	bool result = false;
 
-	CALL_DEBUG5(cctx, "SPI close command. text=%s", cmdctx->command_text);
+	CALL_DEBUG5(cctx, "SPI close statement. text=%s", stmctx->statement_text);
 
-	if (plwasm_spi_resultset_is_opened(cctx, cmdctx)) {
-		plwasm_spi_resultset_close(cctx, cmdctx);
+	if (plwasm_spi_resultset_is_opened(cctx, stmctx)) {
+		plwasm_spi_resultset_close(cctx, stmctx);
 	}
 
-	if (cmdctx->plan != NULL) {
-		SPI_freeplan(cmdctx->plan);
-		cmdctx->plan = NULL;
+	if (stmctx->plan != NULL) {
+		SPI_freeplan(stmctx->plan);
+		stmctx->plan = NULL;
 		result = true;
 	}
 
-	command_context_init(cmdctx);
+	statement_context_init(stmctx);
 	return result;
 }
 
 bool
 plwasm_spi_resultset_is_opened(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
-	bool is_opened = (cmdctx->cursor.portal != NULL);
-	CALL_DEBUG5(cctx, "SPI cursor is opened=%d. text=%s", is_opened, cmdctx->command_text);
+	bool is_opened = (stmctx->cursor.portal != NULL);
+	CALL_DEBUG5(cctx, "SPI cursor is opened=%d. text=%s", is_opened, stmctx->statement_text);
 	return is_opened;
 }
 
 bool
 plwasm_spi_resultset_fetch(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
-	CALL_DEBUG5(cctx, "SPI fetch. text=%s", cmdctx->command_text);
+	CALL_DEBUG5(cctx, "SPI fetch. text=%s", stmctx->statement_text);
 
-	check_resultset_ready(cctx, cmdctx);
+	check_resultset_ready(cctx, stmctx);
 
-	SPI_cursor_fetch(cmdctx->cursor.portal, true, 1);
+	SPI_cursor_fetch(stmctx->cursor.portal, true, 1);
 	CALL_DEBUG5(cctx, "SPI_cursor_fetch processed=%ld", SPI_processed);
-        cmdctx->tuptable = SPI_tuptable;
-        cmdctx->processed = SPI_processed;
-	if (cmdctx->processed <= 0) {
-		plwasm_spi_resultset_close(cctx, cmdctx);
+        stmctx->tuptable = SPI_tuptable;
+        stmctx->processed = SPI_processed;
+	if (stmctx->processed <= 0) {
+		plwasm_spi_resultset_close(cctx, stmctx);
 		return false;
 	}
-	cmdctx->cursor.pos++;
+	stmctx->cursor.pos++;
 	return true;
 }
 
 bool
 plwasm_spi_resultset_close(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
-	CALL_DEBUG5(cctx, "SPI cursor close. text=%s", cmdctx->command_text);
+	CALL_DEBUG5(cctx, "SPI cursor close. text=%s", stmctx->statement_text);
 
-	if (cmdctx->cursor.portal == NULL) {
+	if (stmctx->cursor.portal == NULL) {
 		CALL_DEBUG5(cctx, "Skipped, because cursor is already closed.");
 		return false;
 	}
 
-	SPI_cursor_close(cmdctx->cursor.portal);
-	cursor_context_init(cmdctx);
+	SPI_cursor_close(stmctx->cursor.portal);
+	cursor_context_init(stmctx);
 	CALL_DEBUG5(cctx, "Closed.");
 	return true;
 }
 
 int plwasm_spi_resultset_meta_get_att_count(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
-	check_resultset_ready(cctx, cmdctx);
-        return cmdctx->tuptable->tupdesc->natts;
+	check_resultset_ready(cctx, stmctx);
+        return stmctx->tuptable->tupdesc->natts;
 }
 
 Form_pg_attribute
 plwasm_spi_resultset_meta_get_att_desc(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx,
+	plwasm_pg_statement_context_t *stmctx,
 	int att_idx
 ) {
-	check_resultset_ready(cctx, cmdctx);
-	return get_att_desc(cctx, cmdctx, att_idx);
+	check_resultset_ready(cctx, stmctx);
+	return get_att_desc(cctx, stmctx, att_idx);
 }
 
 Datum
 plwasm_spi_resultset_get_val_as(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx,
+	plwasm_pg_statement_context_t *stmctx,
 	int att_idx,
 	Oid desired_type,
 	bool *is_null
@@ -367,16 +367,16 @@ plwasm_spi_resultset_get_val_as(
 
 	CALL_DEBUG5(cctx, "%s begin. index=%d", FUNC_NAME, att_idx);
 
-	check_resultset_ready(cctx, cmdctx);
-	check_resultset_fetch_status(cctx, cmdctx);
-	att = get_att_desc(cctx, cmdctx, att_idx);
+	check_resultset_ready(cctx, stmctx);
+	check_resultset_fetch_status(cctx, stmctx);
+	att = get_att_desc(cctx, stmctx, att_idx);
 
 	CALL_DEBUG5(cctx, "%s get value. index=%d", FUNC_NAME, att_idx);
         val = heap_getattr(
-		//cmdctx->tuptable->vals[cmdctx->cursor.pos],
-		cmdctx->tuptable->vals[0],
+		//stmctx->tuptable->vals[stmctx->cursor.pos],
+		stmctx->tuptable->vals[0],
 		att_idx + 1,
-		cmdctx->tuptable->tupdesc,
+		stmctx->tuptable->tupdesc,
 		is_null);
         if (*is_null) {
 		CALL_DEBUG5(cctx, "%s attribute is null. index=%d", FUNC_NAME, att_idx);
@@ -400,13 +400,13 @@ plwasm_spi_resultset_get_val_as(
 Datum
 plwasm_spi_query_scalar_as(
 	plwasm_call_context_t *cctx,
-	char	*cmd_txt,
+	char	*stmt_txt,
 	Oid	desired_type,
 	bool	*is_null
 ) {
   volatile MemoryContext oldctx;
   volatile ResourceOwner oldowner;
-  plwasm_pg_command_context_t *cmdctx;
+  plwasm_pg_statement_context_t *stmctx;
   Datum val;
 
   oldowner = CurrentResourceOwner;
@@ -415,14 +415,14 @@ plwasm_spi_query_scalar_as(
   PG_TRY();
   {
     plwasm_spi_internal_transaction_begin(cctx);
-    cmdctx = plwasm_spi_command_create(cctx, cmd_txt);
-    plwasm_spi_command_prepare(cctx, cmdctx);
-    plwasm_spi_command_execute(cctx, cmdctx, 1);
-    if (!plwasm_spi_resultset_fetch(cctx, cmdctx)) {
+    stmctx = plwasm_spi_statement_create(cctx, stmt_txt);
+    plwasm_spi_statement_prepare(cctx, stmctx);
+    plwasm_spi_statement_execute(cctx, stmctx, 1);
+    if (!plwasm_spi_resultset_fetch(cctx, stmctx)) {
       CALL_ERROR(cctx, "no result set");
     }
     val = plwasm_spi_resultset_get_val_as(
-	cctx, cmdctx, 0, desired_type, is_null);
+	cctx, stmctx, 0, desired_type, is_null);
     plwasm_spi_internal_transaction_commit(cctx, oldowner);
   }
   PG_CATCH();
@@ -443,100 +443,100 @@ spi_abort(
 }
 
 
-static plwasm_pg_command_context_t*
-command_context_vec_create(
+static plwasm_pg_statement_context_t*
+statement_context_vec_create(
 	int sz
 ) {
-	plwasm_pg_command_context_t *cmdctx_vec;
-	plwasm_pg_command_context_t *cmdctx;
-	cmdctx_vec = (plwasm_pg_command_context_t*) palloc(
-		sizeof(plwasm_pg_command_context_t) * sz);
-	cmdctx = cmdctx_vec;
+	plwasm_pg_statement_context_t *stmctx_vec;
+	plwasm_pg_statement_context_t *stmctx;
+	stmctx_vec = (plwasm_pg_statement_context_t*) palloc(
+		sizeof(plwasm_pg_statement_context_t) * sz);
+	stmctx = stmctx_vec;
 	for (int i = 0; i < sz; ++i) {
-		cmdctx->id = i;
-		command_context_init(cmdctx);
-		++cmdctx;
+		stmctx->id = i;
+		statement_context_init(stmctx);
+		++stmctx;
 	}
-	return cmdctx_vec;
+	return stmctx_vec;
 }
 
-static plwasm_pg_command_context_t*
-command_context_vec_find_free(
+static plwasm_pg_statement_context_t*
+statement_context_vec_find_free(
 	plwasm_call_context_t *cctx
 ) {
-	plwasm_pg_command_context_t* it = cctx->spi.cmdctx_vec;
-	for (int i = 0; i < cctx->spi.cmdctx_vec_sz; ++i) {
-		if (command_context_is_free(it)) {
+	plwasm_pg_statement_context_t* it = cctx->spi.stmctx_vec;
+	for (int i = 0; i < cctx->spi.stmctx_vec_sz; ++i) {
+		if (statement_context_is_free(it)) {
 			return it;
 		}
 		++it;
 	}
-	CALL_ERROR(cctx, "The number of active commands has reached ther upper limit.");
+	CALL_ERROR(cctx, "The number of active statements has reached ther upper limit.");
 }
 
 static
-plwasm_pg_command_context_t*
-command_context_vec_get(
+plwasm_pg_statement_context_t*
+statement_context_vec_get(
 	plwasm_call_context_t *cctx,
-	int cmd_id
+	int stmt_id
 ) {
-	plwasm_pg_command_context_t *cmdctx;
+	plwasm_pg_statement_context_t *stmctx;
 
-	if (cctx->spi.cmdctx_vec == NULL) {
-		CALL_ERROR(cctx, "Command was not created.");
+	if (cctx->spi.stmctx_vec == NULL) {
+		CALL_ERROR(cctx, "Statement was not created.");
 	}
 
-	if (cmd_id < 0 || cmd_id >= cctx->spi.cmdctx_vec_sz) {
-		CALL_ERROR(cctx, "Invalid command id. id=%d", cmd_id);
+	if (stmt_id < 0 || stmt_id >= cctx->spi.stmctx_vec_sz) {
+		CALL_ERROR(cctx, "Invalid statement id. id=%d", stmt_id);
 	}
 	
-	cmdctx = &(cctx->spi.cmdctx_vec[cmd_id]);
-	if (cmdctx->command_text == NULL) {
-		CALL_ERROR(cctx, "Invalid command index. Command was not created. id=%d", cmd_id);
+	stmctx = &(cctx->spi.stmctx_vec[stmt_id]);
+	if (stmctx->statement_text == NULL) {
+		CALL_ERROR(cctx, "Invalid statement index. Statement was not created. id=%d", stmt_id);
 	}
-	return cmdctx;
+	return stmctx;
 }
 
 static
 bool
-command_context_is_free(
-	plwasm_pg_command_context_t *cmdctx
+statement_context_is_free(
+	plwasm_pg_statement_context_t *stmctx
 ) {
-  return cmdctx->command_text == NULL;
+  return stmctx->statement_text == NULL;
 }
 
 static void
-command_context_init(
-  plwasm_pg_command_context_t *cmdctx
+statement_context_init(
+  plwasm_pg_statement_context_t *stmctx
 ) {
-        cmdctx->status = 0;
-        cmdctx->command_text = NULL;
-        cmdctx->plan = NULL;
-        cmdctx->plan_is_query = false;
-        cmdctx->tuptable = NULL;
-        cmdctx->processed = -1;
-        cursor_context_init(cmdctx);
+        stmctx->status = 0;
+        stmctx->statement_text = NULL;
+        stmctx->plan = NULL;
+        stmctx->plan_is_query = false;
+        stmctx->tuptable = NULL;
+        stmctx->processed = -1;
+        cursor_context_init(stmctx);
 }
 
 static void
 cursor_context_init(
-  plwasm_pg_command_context_t *cmdctx
+  plwasm_pg_statement_context_t *stmctx
 ) {
-	cmdctx->cursor.portal = NULL;
-        cmdctx->cursor.pos = -1;
-        cmdctx->cursor.is_null = false;
+	stmctx->cursor.portal = NULL;
+        stmctx->cursor.pos = -1;
+        stmctx->cursor.is_null = false;
 }
 
 static void
 check_resultset_ready(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
-	if (cmdctx->status <= 0) {
-		CALL_ERROR(cctx, "command was not succeeded.");
+	if (stmctx->status <= 0) {
+		CALL_ERROR(cctx, "statement was not succeeded.");
 	}
 
-	if (cmdctx->cursor.portal == NULL) {
+	if (stmctx->cursor.portal == NULL) {
 		CALL_ERROR(cctx, "cursor was not opened.");
 	}
 }
@@ -544,13 +544,13 @@ check_resultset_ready(
 static void
 check_resultset_fetch_status(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx
+	plwasm_pg_statement_context_t *stmctx
 ) {
-	if (cmdctx->tuptable == NULL) {
+	if (stmctx->tuptable == NULL) {
 		CALL_ERROR(cctx, "no results");
 	}
 
-        if (cmdctx->cursor.pos < 0) {
+        if (stmctx->cursor.pos < 0) {
 		CALL_ERROR(cctx, "invalid current position.");
         }
 }
@@ -558,18 +558,18 @@ check_resultset_fetch_status(
 static Form_pg_attribute
 get_att_desc(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t *cmdctx,
+	plwasm_pg_statement_context_t *stmctx,
 	int att_idx
 ) {
 	const char *FUNC_NAME = "get_att_desc";
 	Form_pg_attribute att;
 
 	CALL_DEBUG5(cctx, "%s begin. index=%d", FUNC_NAME, att_idx);
-        if (att_idx < 0 || att_idx >= cmdctx->tuptable->tupdesc->natts) {
+        if (att_idx < 0 || att_idx >= stmctx->tuptable->tupdesc->natts) {
 		CALL_ERROR(cctx, "attribute index is out of range.");
         }
 
-	att = TupleDescAttr(cmdctx->tuptable->tupdesc, att_idx);
+	att = TupleDescAttr(stmctx->tuptable->tupdesc, att_idx);
         if (att->attisdropped) {
 		CALL_ERROR(cctx, "attribute was dropped.");
         }

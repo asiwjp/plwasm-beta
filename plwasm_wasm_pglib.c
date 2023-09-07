@@ -1,6 +1,6 @@
 #include "plwasm_wasm_pglib.h"
 #include "plwasm_wasm_pglib_core.h"
-#include "plwasm_wasm_pglib_command.h"
+#include "plwasm_wasm_pglib_statement.h"
 #include "plwasm_wasm_pglib_resultset.h"
 #include "plwasm_wasm_memory.h"
 #include "plwasm_wasm_utils.h"
@@ -137,7 +137,7 @@ plwasm_wasm_pglib_load(
     wasm_valtype_new_i32());
 
   /*
-   * command api
+   * statement api
    */
   plwasm_wasm_define_func_1(
     ectx,
@@ -167,8 +167,8 @@ plwasm_wasm_pglib_load(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "command_create_unsafe",
-    plwasm_wasm_pglib_command_create_unsafe,
+    "statement_create_unsafe",
+    plwasm_wasm_pglib_statement_create_unsafe,
     wasm_valtype_new_i32(),
     2,
     wasm_valtype_new_i32(),
@@ -178,8 +178,8 @@ plwasm_wasm_pglib_load(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "command_prepare",
-    plwasm_wasm_pglib_command_prepare,
+    "statement_prepare",
+    plwasm_wasm_pglib_statement_prepare,
     1,
     wasm_valtype_new_i32());
 
@@ -187,8 +187,8 @@ plwasm_wasm_pglib_load(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "command_execute",
-    plwasm_wasm_pglib_command_execute,
+    "statement_execute",
+    plwasm_wasm_pglib_statement_execute,
     wasm_valtype_new_i64(),
     1,
     wasm_valtype_new_i32());
@@ -197,8 +197,8 @@ plwasm_wasm_pglib_load(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
-    "command_close",
-    plwasm_wasm_pglib_command_close,
+    "statement_close",
+    plwasm_wasm_pglib_statement_close,
     wasm_valtype_new_i32(),
     1,
     wasm_valtype_new_i32());

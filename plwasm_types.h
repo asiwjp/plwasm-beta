@@ -23,21 +23,21 @@ typedef struct plwasm_pg_cursor_context {
 	bool		is_null;
 } plwasm_pg_cursor_context_t;
 
-typedef struct plwasm_pg_command_context {
+typedef struct plwasm_pg_statement_context {
 	int8_t				id;
 	int				status;
-	char				*command_text;
+	char				*statement_text;
 	SPIPlanPtr			plan;
 	bool				plan_is_query;
 	SPITupleTable			*tuptable;
 	int				processed;
 	plwasm_pg_cursor_context_t	cursor;
-} plwasm_pg_command_context_t;
+} plwasm_pg_statement_context_t;
 
 typedef struct plwasm_spi_context {
 	bool				connected;
-	plwasm_pg_command_context_t	*cmdctx_vec;
-	int				cmdctx_vec_sz;
+	plwasm_pg_statement_context_t	*stmctx_vec;
+	int				stmctx_vec_sz;
 } plwasm_spi_context_t;
 
 typedef struct plwasm_pg_proc {

@@ -10,12 +10,12 @@ plwasm_wasm_mem_get_string(
     size_t sz
 ) {
   size_t converted_sz = 0;
-  char *arg_cmd_txt = plwasm_wasm_mem_offset(
+  char *txt = plwasm_wasm_mem_offset(
 	cctx, offset, sz, true, NULL);
 
   return plwasm_utils_str_enc(
     cctx,
-    arg_cmd_txt,
+    txt,
     sz,
     cctx->func_config.string_enc,
     GetDatabaseEncoding(),

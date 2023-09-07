@@ -35,72 +35,72 @@ plwasm_spi_err_capture(
 	plwasm_call_context_t *cctx
 );
 
-plwasm_pg_command_context_t*
-plwasm_spi_command_create(
+plwasm_pg_statement_context_t*
+plwasm_spi_statement_create(
 	plwasm_call_context_t *cctx,
-	char *command
+	char *statement
 );
 
-plwasm_pg_command_context_t*
-plwasm_spi_command_get_context(
+plwasm_pg_statement_context_t*
+plwasm_spi_statement_get_context(
 	plwasm_call_context_t *cctx,
-	int cmd_id
+	int stmt_id
 );
 
 void
-plwasm_spi_command_prepare(
+plwasm_spi_statement_prepare(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx
+	plwasm_pg_statement_context_t* stmctx
 );
 
 uint64_t
-plwasm_spi_command_execute(
+plwasm_spi_statement_execute(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx,
+	plwasm_pg_statement_context_t* stmctx,
 	int limit
 );
 
 bool
-plwasm_spi_command_close(
+plwasm_spi_statement_close(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx
+	plwasm_pg_statement_context_t* stmctx
 );
 
 bool
 plwasm_spi_resultset_is_opened(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx
+	plwasm_pg_statement_context_t* stmctx
 );
 
 bool
 plwasm_spi_resultset_fetch(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx
+	plwasm_pg_statement_context_t* stmctx
 );
 
 bool
 plwasm_spi_resultset_close(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx
+	plwasm_pg_statement_context_t* stmctx
 );
 
 int
 plwasm_spi_resultset_meta_get_att_count(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx
+	plwasm_pg_statement_context_t* stmctx
 );
 
 Form_pg_attribute
 plwasm_spi_resultset_meta_get_att_desc(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx,
+	plwasm_pg_statement_context_t* stmctx,
 	int att_idx
 );
 
 Datum
 plwasm_spi_resultset_get_val_as(
 	plwasm_call_context_t *cctx,
-	plwasm_pg_command_context_t* cmdctx,
+	plwasm_pg_statement_context_t* stmctx,
 	int att_index,
 	Oid desired_type,
 	bool *is_null
@@ -109,7 +109,7 @@ plwasm_spi_resultset_get_val_as(
 Datum
 plwasm_spi_query_scalar_as(
 	plwasm_call_context_t *cctx,
-	char	*command,
+	char	*statement,
 	Oid	desired_type,
 	bool	*is_null
 );

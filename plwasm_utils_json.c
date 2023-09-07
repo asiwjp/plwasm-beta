@@ -2,25 +2,11 @@
 #include "plwasm_log.h"
 
 JsonbValue*
-plwasm_json_get_value(Jsonb *jb, char *path, bool required)
-{
-  char *p = strtok(pstrdup(path), ".");
-  JsonbValue *jv = plwasm_json_get_prop_value(jb, p, required);
-  
-  while (jv != NULL) {
-    p = strtok(NULL, ".");
-    if (p == NULL) {
-      return jv;
-    }
-
-    jv = plwasm_json_get_prop_value(JsonbValueToJsonb(jv), p, required);
-  }
-  return NULL;
-}
-
-JsonbValue*
-plwasm_json_get_prop_value(Jsonb *jb, char *key, bool required)
-{
+plwasm_json_get_prop_value(
+  Jsonb *jb,
+  char *key,
+  bool required
+) {
   JsonbValue kval;
   JsonbValue *v = NULL;
 
@@ -36,16 +22,47 @@ plwasm_json_get_prop_value(Jsonb *jb, char *key, bool required)
   return v;
 }
 
-char* plwasm_json_get_value_as_cstring(Jsonb *jb, char *key, bool required) {
+JsonbValue*
+plwasm_json_get_value(
+  Jsonb *jb,
+  char *path,
+  bool required
+) {
+  char *p = strtok(pstrdup(path), ".");
+  JsonbValue *jv = plwasm_json_get_prop_value(jb, p, required);
+  
+  while (jv != NULL) {
+    p = strtok(NULL, ".");
+    if (p == NULL) {
+      return jv;
+    }
+
+    jv = plwasm_json_get_prop_value(JsonbValueToJsonb(jv), p, required);
+  }
+  return NULL;
+}
+
+char*
+plwasm_json_get_value_as_cstring(
+  Jsonb *jb,
+  char *path,
+  bool required
+) {
   JsonbValue *v = NULL;
-  v = plwasm_json_get_value(jb, key, required); 
+  v = plwasm_json_get_value(jb, path, required); 
   if (v == NULL) return NULL;
   return pnstrdup(v->val.string.val, v->val.string.len);
 }
 
-bool plwasm_json_get_value_as_bool(Jsonb *jb, char *key, bool required, bool default_value) {
+bool
+plwasm_json_get_value_as_bool(
+  Jsonb *jb,
+  char *path,
+  bool required,
+  bool default_value
+) {
   JsonbValue *v = NULL;
-  v = plwasm_json_get_value(jb, key, required); 
+  v = plwasm_json_get_value(jb, path, required); 
   if (v == NULL) return default_value;
   return v->val.boolean;
 }

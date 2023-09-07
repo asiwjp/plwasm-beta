@@ -6,14 +6,14 @@
 #include <utils/jsonb.h>
 
 JsonbValue*
-plwasm_json_get_value(
+plwasm_json_get_prop_value(
   Jsonb *json,
   char *key,
   bool required
 );
 
 JsonbValue*
-plwasm_json_get_prop_value(
+plwasm_json_get_value(
   Jsonb *json,
   char *key,
   bool required
@@ -22,14 +22,14 @@ plwasm_json_get_prop_value(
 char*
 plwasm_json_get_value_as_cstring(
   Jsonb *json,
-  char *key,
+  char *path,
   bool required
 );
 
 bool
 plwasm_json_get_value_as_bool(
   Jsonb *jb,
-  char *key,
+  char *path,
   bool required,
   bool default_value
 )

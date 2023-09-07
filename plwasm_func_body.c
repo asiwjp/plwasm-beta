@@ -90,6 +90,7 @@ void plwasm_func_body_parse(
   CALL_DEBUG5(cctx, "func config file=%s", cctx->func_config.file);
   CALL_DEBUG5(cctx, "func config func=%s", cctx->func_config.func_name);
   CALL_DEBUG5(cctx, "func config enc=%s", cctx->func_config.string_enc_name);
+  CALL_DEBUG5(cctx, "func config cache.instance.enabled=%d", cctx->func_config.cache.instance.enabled);
   CALL_DEBUG5(cctx, "func config stats=%d", (int)(cctx->func_config.stats));
 
   cctx->func_config.string_enc = pg_char_to_encoding(cctx->func_config.string_enc_name);
@@ -128,23 +129,24 @@ bool plwasm_func_body_parse_json_config(
   plwasm_call_context_t *cctx,
   char *proname,
   char *source,
-  int source_len) {
+  int source_len
+) {
 
   //char *FUNC_NAME = "plwasm_func_body_parse_json_config";
-  Jsonb *jsonb;
+  Jsonb *jb_root;
 
   if (!plwasm_utils_str_startsWithN_safe(source, source_len, "{", 1)) {
     return false;
   }
 
   CALL_DEBUG5(cctx, "function is with json config");
-  jsonb = (Jsonb*) DirectFunctionCall1Coll(jsonb_in, DEFAULT_COLLATION_OID, (Datum)source);
-
-  cctx->func_config.file = plwasm_json_get_value_as_cstring(jsonb, "file", true);
-  cctx->func_config.func_name = plwasm_json_get_value_as_cstring(jsonb, "func", false);
-  cctx->func_config.string_enc_name = plwasm_json_get_value_as_cstring(jsonb, "enc", true);
-  cctx->func_config.trace = plwasm_json_get_value_as_bool(jsonb, "trace", false);
-  cctx->func_config.stats = plwasm_json_get_value_as_bool(jsonb, "stats", false);
+  jb_root = (Jsonb*) DirectFunctionCall1Coll(jsonb_in, DEFAULT_COLLATION_OID, (Datum)source);
+  cctx->func_config.file = plwasm_json_get_value_as_cstring(jb_root, "file", true);
+  cctx->func_config.func_name = plwasm_json_get_value_as_cstring(jb_root, "func", false);
+  cctx->func_config.string_enc_name = plwasm_json_get_value_as_cstring(jb_root, "enc", true);
+  cctx->func_config.trace = plwasm_json_get_value_as_bool(jb_root, "trace", false, false);
+  cctx->func_config.stats = plwasm_json_get_value_as_bool(jb_root, "stats", false, false);
+  cctx->func_config.cache.instance.enabled = plwasm_json_get_value_as_bool(jb_root, "cache.instance", false, true);
 
   if (cctx->func_config.func_name == NULL) {
      cctx->func_config.func_name = pstrdup(proname);

@@ -20,6 +20,9 @@
 #define EXT_ERROR(ectx, ...) \
   ereport(ERROR, (errmsg(__VA_ARGS__)));
 
+#define EXT_INFO(ectx, ...) \
+  ereport(INFO, (errmsg(__VA_ARGS__)));
+
 #define EXT_DEBUG5(ectx, ...) \
   ereport(DEBUG5, (errmsg(__VA_ARGS__)));
 

@@ -4,21 +4,19 @@
 #include "plwasm_wasm_pglib_resultset.h"
 #include "plwasm_wasm_memory.h"
 #include "plwasm_wasm_utils.h"
+#include "plwasm_spi.h"
 #include "plwasm_utils_pg.h"
 #include "plwasm_log.h"
 #include <postgres.h>
-#include <mb/pg_wchar.h>
-
-#include <iconv.h>
 
 #define WASM_MODULE_NAME "pg"
 #define WASM_MODULE_NAME_LEN 2
 
 void
-plwasm_wasm_pglib_init(
+plwasm_wasm_pglib_load(
     plwasm_extension_context_t *ectx
 ) {
-  char* FUNC_NAME = "plwasm_wasm_pglib_init";
+  char* FUNC_NAME = "plwasm_wasm_pglib_load";
   wasmtime_error_t *error;
   wasm_byte_vec_t wat_pg;
   wasm_byte_vec_t wasm_pg;
@@ -262,14 +260,25 @@ plwasm_wasm_pglib_bind(
   wasmtime_error_t *error;
 
   error = wasmtime_linker_module(
-	cctx->ectx->linker, 
-	cctx->rt.context, 
+	cctx->ectx->rt.linker, 
+	cctx->ectx->rt.context, 
 	WASM_MODULE_NAME, 
 	WASM_MODULE_NAME_LEN,
 	cctx->ectx->modules.pg);
   if (error != NULL)
     CALL_WASM_ERROR(cctx, "define module failed.", error, NULL);
+}
 
+void
+plwasm_wasm_pglib_init(
+  plwasm_call_context_t *cctx
+) {
   cctx->spi.connected = false;
 }
 
+void
+plwasm_wasm_pglib_release(
+  plwasm_call_context_t *cctx
+) {
+  plwasm_spi_finish(cctx);
+}

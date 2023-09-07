@@ -73,8 +73,8 @@ plwasm_wasm_mem_offset(
   }
 
   ok = wasmtime_instance_export_get(
-    cctx->rt.context,
-    &(cctx->rt.instance),
+    cctx->ectx->rt.context,
+    cctx->instance,
     "memory",
     6,
     (wasmtime_extern_t*)&ext);
@@ -83,7 +83,7 @@ plwasm_wasm_mem_offset(
   }
 
   memory = (char*) wasmtime_memory_data(
-    cctx->rt.context, 
+    cctx->ectx->rt.context, 
     &(ext.of.memory));
   //memory_sz = wasmtime_memory_size(
   //  cctx->rt.context,

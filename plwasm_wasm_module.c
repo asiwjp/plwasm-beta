@@ -11,6 +11,15 @@
 #include <mb/pg_wchar.h>
 #include <utils/jsonb.h>
 
+#define ENTRY_POINT_FUNC_NAME_REACTOR "_initialize"
+#define ENTRY_POINT_FUNC_NAME_START "_start"
+
+char*
+plwasm_wasm_find_entry_point(
+	plwasm_call_context_t *cctx,
+	wasmtime_extern_t *run,
+	wasmtime_instance_t *instance
+);
 
 void plwasm_wasm_load_file(
   plwasm_call_context_t *cctx,
@@ -26,12 +35,12 @@ plwasm_wasm_module_load_with_cache(
 ) {
   char *FUNC_NAME = "plwasm_wasm_module_load_with_cache";
   bool found;
-  plwasm_wasm_module_cache_entry_t *cache_entry;
+  plwasm_hs_entry_cache_wasm_module_t *cache_entry;
   wasm_byte_vec_t wasm;
   //volatile MemoryContext memctx;
   volatile MemoryContext old_memctx;
 
-  cache_entry = (plwasm_wasm_module_cache_entry_t*) hash_search(
+  cache_entry = (plwasm_hs_entry_cache_wasm_module_t*) hash_search(
     cctx->ectx->wasm_module_cache,
     &fn_oid,
     HASH_ENTER,
@@ -43,7 +52,10 @@ plwasm_wasm_module_load_with_cache(
     cctx->func_config.func_name = cache_entry->config.func_name;
     cctx->func_config.string_enc_name  = cache_entry->config.string_enc_name;
     cctx->func_config.string_enc = cache_entry->config.string_enc;
+    cctx->func_config.cache.instance = cache_entry->config.cache.instance;
     cctx->func_config.trace = cache_entry->config.trace;
+    cctx->func_config.stats = cache_entry->config.stats;
+    plwasm_log_stopwatch_save(cctx, cctx->times.loaded);
     return cache_entry->module;
   }
 
@@ -63,8 +75,11 @@ plwasm_wasm_module_load_with_cache(
   cache_entry->config.func_name = pstrdup(cctx->func_config.func_name);
   cache_entry->config.string_enc_name = pstrdup(cctx->func_config.string_enc_name);
   cache_entry->config.string_enc = cctx->func_config.string_enc;
+  cache_entry->config.cache.instance = cctx->func_config.cache.instance;
   cache_entry->config.trace = cctx->func_config.trace;
+  cache_entry->config.stats = cctx->func_config.stats;
   MemoryContextSwitchTo(old_memctx);
+  plwasm_log_stopwatch_save(cctx, cctx->times.loaded);
   CALL_DEBUG5(cctx, "%s module cache was not found. func_name=%s", FUNC_NAME, cache_entry->config.func_name);
   return cache_entry->module;
 }
@@ -99,29 +114,152 @@ plwasm_wasm_module_create(
   wasi_config_inherit_stdout(wasi_config);
   wasi_config_inherit_stderr(wasi_config);
 
-  error = wasmtime_context_set_wasi(cctx->rt.context, wasi_config);
+  error = wasmtime_context_set_wasi(cctx->ectx->rt.context, wasi_config);
   if (error != NULL)
     CALL_WASM_ERROR(cctx, "failed to instantiate WASI", error, NULL);
-  
+
   return module;
+}
+
+wasmtime_instance_t*
+plwasm_wasm_module_instantiate_with_cache(
+  	plwasm_call_context_t *cctx,
+	Oid fn_oid,
+        wasmtime_module_t *module
+) {
+  char *FUNC_NAME = "plwasm_wasm_module_instantiate_with_cache";
+  wasmtime_instance_t *instance;
+  plwasm_hs_entry_cache_wasm_instance_t *cache_entry;
+  bool found;
+
+  if (!cctx->func_config.cache.instance.enabled) {
+    CALL_DEBUG5(cctx, "%s instance cache was disabled. func_name=%s",
+	FUNC_NAME, cctx->func_config.func_name);
+    instance = palloc(sizeof(wasmtime_instance_t));
+    plwasm_wasm_module_instantiate(cctx, instance, module);
+    return instance;
+  }
+
+  cache_entry = (plwasm_hs_entry_cache_wasm_instance_t*) hash_search(
+    cctx->ectx->wasm_instance_cache,
+    &fn_oid,
+    HASH_ENTER,
+    &found);
+  if (found) {
+    CALL_DEBUG5(cctx, "%s instance cache was found. func_name=%s",
+	FUNC_NAME, cctx->func_config.func_name);
+    plwasm_log_stopwatch_save(cctx, cctx->times.instantiated);
+    cctx->times.entry_point_find_ended = cctx->times.instantiated;
+    cctx->times.entry_point_invoked = cctx->times.instantiated;
+    return &(cache_entry->instance);
+  }
+
+  CALL_DEBUG5(cctx, "%s instance cache was not found. fn_oid=%d",
+	FUNC_NAME, fn_oid);
+  plwasm_wasm_module_instantiate(cctx, &(cache_entry->instance), module);
+  return &(cache_entry->instance);
 }
 
 void
 plwasm_wasm_module_instantiate(
   	plwasm_call_context_t *cctx,
+	wasmtime_instance_t *instance,
         wasmtime_module_t *module
 ) {
   wasmtime_error_t *error;
-  wasm_trap_t *trap;
-
+  wasm_trap_t *trap = NULL;
+  wasmtime_extern_t run;
+  
   CALL_DEBUG5(cctx, "Bind pg module.");
   plwasm_wasm_pglib_bind(cctx);
 
   CALL_DEBUG5(cctx, "Instantiating module.");
-  trap = NULL;
-  error = wasmtime_linker_instantiate(cctx->ectx->linker, cctx->rt.context, module, &(cctx->rt.instance), &trap); 
+  error = wasmtime_linker_instantiate(
+	cctx->ectx->rt.linker,
+	cctx->ectx->rt.context,
+	module,
+	instance,
+	&trap); 
   if (error != NULL || trap != NULL)
     CALL_WASM_ERROR(cctx, "failed to instantiate", error, trap);
+  plwasm_log_stopwatch_save(cctx, cctx->times.instantiated);
+
+  CALL_DEBUG5(cctx, "Calling entry point function.");
+  cctx->entry_point_name = plwasm_wasm_find_entry_point(cctx, &run, instance);
+  plwasm_log_stopwatch_save(cctx, cctx->times.entry_point_find_ended);
+  if (cctx->entry_point_name == NULL) {
+    plwasm_log_stopwatch_save(cctx, cctx->times.entry_point_find_ended);
+    cctx->times.entry_point_invoked = cctx->times.entry_point_find_ended;
+    CALL_DEBUG5(cctx, "Entry point was not found.");
+    return;
+  }
+
+  CALL_DEBUG5(cctx, "Entry point is %s", cctx->entry_point_name);
+  trap = NULL;
+  error = wasmtime_func_call(cctx->ectx->rt.context, &run.of.func, NULL, 0, NULL, 0, &trap);
+  plwasm_log_stopwatch_save(cctx, cctx->times.entry_point_invoked);
+  if (error != NULL || trap != NULL) {
+      CALL_WASM_ERROR(cctx, "failed to call entry point function", error, trap);
+  }
+
+  CALL_DEBUG5(cctx, "%s called.", cctx->entry_point_name);
+}
+
+void
+plwasm_wasm_module_extra_init(
+  plwasm_call_context_t *cctx
+) {
+  CALL_DEBUG5(cctx, "Init extra modules.");
+  plwasm_wasm_pglib_init(cctx);
+}
+
+void
+plwasm_wasm_module_extra_release(
+  plwasm_call_context_t *cctx
+) {
+  if (cctx->instance == NULL) {
+    CALL_DEBUG5(cctx, "Release extra modules. skipped.");
+    return;
+  }
+
+  CALL_DEBUG5(cctx, "Release extra modules.");
+  plwasm_wasm_pglib_release(cctx);
+}
+
+char*
+plwasm_wasm_find_entry_point(
+	plwasm_call_context_t *cctx,
+	wasmtime_extern_t *run,
+	wasmtime_instance_t *instance
+) {
+  bool found;
+  char *entry_point_name;
+
+  entry_point_name = ENTRY_POINT_FUNC_NAME_REACTOR;
+  found = wasmtime_instance_export_get(
+    cctx->ectx->rt.context,
+    instance,
+    entry_point_name,
+    strlen(entry_point_name),
+    run);
+
+  if (found) {
+    return entry_point_name;
+  }
+
+  entry_point_name = ENTRY_POINT_FUNC_NAME_START;
+  found = wasmtime_instance_export_get(
+    cctx->ectx->rt.context,
+    instance,
+    entry_point_name,
+    strlen(entry_point_name),
+    run);
+  
+  if (found) {
+    return entry_point_name;
+  }
+
+  return NULL;
 }
 
 void plwasm_wasm_load_wasm(

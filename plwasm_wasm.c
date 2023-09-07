@@ -6,12 +6,6 @@
 #include "plwasm_utils_pg.h"
 
 #include <stdio.h>
-#include <sys/time.h>
-
-#define ENTRY_POINT_FUNC_NAME_REACTOR "_initialize"
-#define ENTRY_POINT_FUNC_NAME_START "_start"
-
-bool plwasm_wasm_find_entry_point(plwasm_call_context_t *cctx, wasmtime_extern_t *run);
 
 Datum
 plwasm_wasm_invoke(
@@ -25,7 +19,7 @@ plwasm_wasm_invoke(
   wasmtime_val_t results[1];
   int nresults;
 
-  bool ok;
+  bool found;
   wasm_trap_t *trap;
 
   fcinfo = cctx->fcinfo;
@@ -43,37 +37,21 @@ plwasm_wasm_invoke(
     nresults = 1;
   }
 
-  CALL_DEBUG5(cctx, "Calling entry point function.");
-  ok = plwasm_wasm_find_entry_point(cctx, &run);
-  plwasm_log_stopwatch_save(cctx, cctx->times.entry_point_find_ended);
-  if (ok) {
-    trap = NULL;
-    error = wasmtime_func_call(cctx->rt.context, &run.of.func, NULL, 0, NULL, 0, &trap);
-    plwasm_log_stopwatch_save(cctx, cctx->times.entry_point_invoked);
-    if (error != NULL || trap != NULL) {
-      CALL_WASM_ERROR(cctx, "failed to call entry point function", error, trap);
-    }
-
-    CALL_DEBUG5(cctx, "%s called.", cctx->entry_point_name);
-  } else {
-    plwasm_log_stopwatch_save(cctx, cctx->times.entry_point_find_ended);
-    cctx->times.entry_point_invoked = cctx->times.entry_point_find_ended;
-    CALL_DEBUG5(cctx, "Entry point was not found.");
-  }
+  wasmtime_context_set_data(cctx->ectx->rt.context, cctx);
 
   CALL_DEBUG5(cctx, "Calling target function %s", cctx->func_config.func_name);
-  ok = wasmtime_instance_export_get(
-    cctx->rt.context,
-    &(cctx->rt.instance),
+  found = wasmtime_instance_export_get(
+    cctx->ectx->rt.context,
+    cctx->instance,
     cctx->func_config.func_name,
     strlen(cctx->func_config.func_name),
     &run);
   plwasm_log_stopwatch_save(cctx, cctx->times.func_find_ended);
-  if (!ok)
+  if (!found)
     CALL_ERROR(cctx, "expected function was not found. name=%s", cctx->func_config.func_name);
 
   trap = NULL;
-  error = wasmtime_func_call(cctx->rt.context, &run.of.func, NULL, 0, results, nresults, &trap);
+  error = wasmtime_func_call(cctx->ectx->rt.context, &run.of.func, NULL, 0, results, nresults, &trap);
   plwasm_log_stopwatch_save(cctx, cctx->times.func_invoked);
   if (error != NULL || trap != NULL)
     CALL_WASM_ERROR(cctx, "failed to call function", error, trap);
@@ -118,37 +96,3 @@ plwasm_wasm_invoke(
   CALL_DEBUG5(cctx, "%s return null", proname);
   PG_RETURN_NULL();
 }
-
-bool plwasm_wasm_find_entry_point(plwasm_call_context_t *cctx, wasmtime_extern_t *run) {
-  bool found;
-  char *entry_point_name;
-
-  entry_point_name = ENTRY_POINT_FUNC_NAME_REACTOR;
-  found = wasmtime_instance_export_get(
-    cctx->rt.context,
-    &(cctx->rt.instance),
-    entry_point_name,
-    strlen(entry_point_name),
-    run);
-
-  if (found) {
-    cctx->entry_point_name = entry_point_name;
-    return true;
-  }
-
-  entry_point_name = ENTRY_POINT_FUNC_NAME_START;
-  found = wasmtime_instance_export_get(
-    cctx->rt.context,
-    &(cctx->rt.instance),
-    entry_point_name,
-    strlen(entry_point_name),
-    run);
-  
-  if (found) {
-    cctx->entry_point_name = entry_point_name;
-    return true;
-  }
-
-  return false;
-}
-

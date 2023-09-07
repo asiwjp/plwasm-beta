@@ -48,6 +48,15 @@ typedef struct plwasm_pg_proc {
   char *entry_point_name;
 } plwasm_pg_proc_t;
 
+typedef struct plwasm_func_cache_config {
+  bool enabled;
+} plwasm_func_cache_config_t;
+
+typedef struct plwasm_func_cache_configs {
+  plwasm_func_cache_config_t instance;
+} plwasm_func_cache_configs_t;
+
+
 typedef struct plwasm_func_config {
   char *file;
   char *func_name;
@@ -57,15 +66,21 @@ typedef struct plwasm_func_config {
   bool  string_enc_required;
   bool trace;
   bool stats;
+  plwasm_func_cache_configs_t cache;
 } plwasm_func_config_t;
 
-typedef struct plwasm_wasm_module_cache_entry {
+typedef struct plwasm_hs_entry_cache_wasm_instance {
+  Oid key;
+  wasmtime_instance_t instance;
+} plwasm_hs_entry_cache_wasm_instance_t;
+
+typedef struct plwasm_hs_entry_cache_wasm_module {
   Oid key;
   MemoryContext memctx;
   wasmtime_module_t *module;
   plwasm_pg_proc_t pg_proc;
   plwasm_func_config_t config;
-} plwasm_wasm_module_cache_entry_t;
+} plwasm_hs_entry_cache_wasm_module_t;
 
 typedef struct plwasm_wasm_modules {
   wasmtime_module_t *pg;
@@ -74,8 +89,8 @@ typedef struct plwasm_wasm_modules {
 
 typedef struct plwasm_wasm_runtime {
   wasmtime_store_t		*store;
+  wasmtime_linker_t		*linker;
   wasmtime_context_t		*context;
-  wasmtime_instance_t		instance;
 } plwasm_wasm_runtime_t;
 
 typedef struct plwasm_wasm_ret {
@@ -106,11 +121,12 @@ typedef struct plwasm_times {
 
 typedef struct plwasm_extension_context {
   int				type;
-  volatile MemoryContext			memctx;
+  volatile MemoryContext	memctx;
   wasm_engine_t			*engine;
-  wasmtime_linker_t		*linker;
+  plwasm_wasm_runtime_t		rt;
   plwasm_wasm_modules_t	 modules;
   HTAB				*wasm_module_cache;
+  HTAB				*wasm_instance_cache;
 } plwasm_extension_context_t;
 
 typedef struct plwasm_call_context {
@@ -119,7 +135,8 @@ typedef struct plwasm_call_context {
 
   plwasm_extension_context_t	*ectx;
   plwasm_pg_proc_t		pg_proc;
-  plwasm_wasm_runtime_t	rt;
+  wasmtime_module_t		*module;
+  wasmtime_instance_t           *instance;
   plwasm_func_config_t		func_config;
   plwasm_wasm_ret_t		ret;
   PG_FUNCTION_ARGS;

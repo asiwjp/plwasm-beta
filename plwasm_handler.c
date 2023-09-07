@@ -52,31 +52,23 @@ static void plwasm_call_context_init(
   cctx->type = plwasm_CTX_TYPE_CALL;
   cctx->ectx = ectx;
   cctx->memctx_default = NULL;
-  cctx->rt.store = NULL;
   cctx->func_config.file = NULL;
   cctx->func_config.wat = NULL;
   cctx->func_config.func_name = NULL;
   cctx->func_config.string_enc_name = NULL;
+  cctx->func_config.cache.instance.enabled = true;
   cctx->func_config.trace = false;
-  cctx->func_config.stats = false;
+  cctx->func_config.stats = true;
+  cctx->module = NULL;
+  cctx->instance = NULL;
   cctx->ret.type = VOIDOID;
   cctx->entry_point_name = "";
   cctx->fcinfo = fcinfo;
-
-  cctx->rt.store = wasmtime_store_new(cctx->ectx->engine, cctx, NULL);
-  if (cctx->rt.store == NULL)
-    CALL_WASM_ERROR(cctx, "failed to create store", NULL, NULL);
-
-  cctx->rt.context = wasmtime_store_context(cctx->rt.store);
 }
 
 static void plwasm_call_context_destroy(
   plwasm_call_context_t *cctx
 ) {
-  if (cctx->rt.store != NULL) {
-    wasmtime_store_delete(cctx->rt.store);
-    cctx->rt.store = NULL;
-  }
 }
 
 Datum
@@ -106,14 +98,14 @@ plwasm_call_handler(PG_FUNCTION_ARGS)
     }
     PG_FINALLY();
     {
-      plwasm_spi_finish(&cctx);
+      plwasm_wasm_module_extra_release(&cctx);
       plwasm_call_context_destroy(&cctx);
       plwasm_log_stopwatch_save(&cctx, cctx.times.ended);
     }
     PG_END_TRY();
 
     if (cctx.func_config.stats) {
-      EXT_DEBUG5(&ectx,
+      EXT_INFO(&ectx,
          "total=%1.3f[ms] (init=%f, load=%f, instantiate=%f, ep_find=%f, ep_invoke=%f, fn_find=%f, fn_invoke=%f, release=%f)",
          compute_elapsed_msec(&cctx.times.begin,   &cctx.times.ended),
          compute_elapsed_msec(&cctx.times.begin,   &cctx.times.initted),
@@ -133,16 +125,15 @@ static Datum
 plwasm_func_handler(plwasm_call_context_t *cctx, PG_FUNCTION_ARGS)
 {
 	Datum		wasm_retval;
-        wasmtime_module_t *module;
+	Oid		fn_oid = fcinfo->flinfo->fn_oid;
 
-	module = plwasm_wasm_module_load_with_cache(cctx, fcinfo->flinfo->fn_oid);
-        plwasm_log_stopwatch_save(cctx, cctx->times.loaded);
+	cctx->module = plwasm_wasm_module_load_with_cache(cctx, fn_oid);
 
-	plwasm_wasm_module_instantiate(cctx, module);
-        plwasm_log_stopwatch_save(cctx, cctx->times.instantiated);
+	cctx->instance = plwasm_wasm_module_instantiate_with_cache(cctx, fn_oid, cctx->module);
+
+	plwasm_wasm_module_extra_init(cctx);
 
 	wasm_retval = plwasm_wasm_invoke(cctx, cctx->pg_proc.name, cctx->pg_proc.ret_type);
-        plwasm_log_stopwatch_save(cctx, cctx->times.invoked);
 
 	if (cctx->pg_proc.ret_type == VOIDOID) {
 		PG_RETURN_NULL();

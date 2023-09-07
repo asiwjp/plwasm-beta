@@ -197,7 +197,7 @@ void plwasm_wasm_define_func(
   EXT_DEBUG5(ectx, "define function. name=%s.%s", module_name, func_name);
 
   error = wasmtime_linker_define_func(
-    ectx->linker, 
+    ectx->rt.linker, 
     module_name,
     module_name_len, 
     func_name,

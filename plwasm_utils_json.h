@@ -5,22 +5,33 @@
 #include <postgres.h>
 #include <utils/jsonb.h>
 
-JsonbValue* plwasm_json_get_value(
+JsonbValue*
+plwasm_json_get_value(
   Jsonb *json,
   char *key,
   bool required
 );
 
-char* plwasm_json_get_value_as_cstring(
+JsonbValue*
+plwasm_json_get_prop_value(
   Jsonb *json,
   char *key,
   bool required
 );
 
-bool plwasm_json_get_value_as_bool(
+char*
+plwasm_json_get_value_as_cstring(
+  Jsonb *json,
+  char *key,
+  bool required
+);
+
+bool
+plwasm_json_get_value_as_bool(
   Jsonb *jb,
   char *key,
-  bool required
+  bool required,
+  bool default_value
 )
 ;
 

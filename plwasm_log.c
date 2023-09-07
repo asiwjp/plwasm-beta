@@ -4,7 +4,7 @@
 double compute_elapsed_msec(struct timespec *begin, struct timespec *end) {
   double begin_nsec, end_nsec;
   begin_nsec = (double)(begin->tv_nsec);
-  if (end->tv_sec == begin->tv_sec) {
+  if (begin->tv_nsec <= end->tv_nsec) {
      end_nsec = (double)(end->tv_nsec);
   } else {
      end_nsec = (double)(end->tv_nsec) + (1000 * 1000 * 1000);

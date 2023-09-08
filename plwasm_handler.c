@@ -68,11 +68,11 @@ _PG_init() {
 				 NULL,
 				 NULL);
 
-   DefineCustomBoolVariable("plwasm.cache.instance",
+   DefineCustomBoolVariable("plwasm.cache.instance.enabled",
 				"Enable caching of WASM module instances.",
 				 NULL,
 				 &ectx.config.cache.instance.enabled,
-				 false,
+				 true,
 				 PGC_SUSET,
 				 0,
 				 NULL,

@@ -10,6 +10,7 @@ plwasm_extension_context_init(
 ) {
   ectx->type = plwasm_CTX_TYPE_EXTENSION;
   ectx->config.trace = false;
+  ectx->config.trace_threshold = 0;
   ectx->config.timing = false;
   ectx->config.cache.instance.enabled = true;
   ectx->modules.pg = NULL;
@@ -32,6 +33,7 @@ plwasm_call_context_init(
   cctx->func_config.func_name = NULL;
   cctx->func_config.string_enc_name = NULL;
   cctx->func_config.trace = ectx->config.trace;
+  cctx->func_config.trace_threshold = ectx->config.trace_threshold;
   cctx->func_config.timing = ectx->config.timing;
   cctx->func_config.cache.instance.enabled = ectx->config.cache.instance.enabled;
   cctx->module = NULL;

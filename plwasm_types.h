@@ -64,12 +64,14 @@ typedef struct plwasm_func_config {
   int   string_enc;
   bool  string_enc_required;
   bool trace;
+  int  trace_threshold;
   bool timing;
   plwasm_func_cache_configs_t cache;
 } plwasm_func_config_t;
 
 typedef struct plwasm_extension_config {
   bool trace;
+  int  trace_threshold;
   bool timing;
   plwasm_func_cache_configs_t cache;
 } plwasm_extension_config_t;

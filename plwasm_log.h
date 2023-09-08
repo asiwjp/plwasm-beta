@@ -11,8 +11,11 @@
 #define CALL_INFO(cctx, ...) \
   ereport(INFO, (errmsg(__VA_ARGS__)));
 
+#define CALL_DEBUG1(cctx, ...) \
+  if ((cctx)->func_config.trace && (cctx)->func_config.trace_threshold >= 1) ereport(DEBUG1, (errmsg(__VA_ARGS__)));
+
 #define CALL_DEBUG5(cctx, ...) \
-  if ((cctx)->func_config.trace) ereport(DEBUG5, (errmsg(__VA_ARGS__)));
+  if ((cctx)->func_config.trace && (cctx)->func_config.trace_threshold == 5) ereport(DEBUG1, (errmsg(__VA_ARGS__)));
 
 #define EXT_FATAL(ectx, ...) \
   ereport(ERROR, (errmsg(__VA_ARGS__)));
@@ -24,7 +27,7 @@
   ereport(INFO, (errmsg(__VA_ARGS__)));
 
 #define EXT_DEBUG5(ectx, ...) \
-  ereport(DEBUG5, (errmsg(__VA_ARGS__)));
+  if ((ectx)->config.trace && (ectx)->config.trace_threshold == 5) ereport(DEBUG1, (errmsg(__VA_ARGS__)));
 
 #define plwasm_log_stopwatch_begin(tm) clock_gettime(CLOCK_REALTIME, &(tm))
 #define plwasm_log_stopwatch_save(cctx, tm) if ((cctx)->func_config.timing) { clock_gettime(CLOCK_REALTIME, &(tm)); }

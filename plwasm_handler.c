@@ -44,6 +44,19 @@ _PG_init() {
 				 NULL,
 				 NULL);
 
+   DefineCustomIntVariable("plwasm.trace_threshold",
+				"This is the detailed degree of trace logging for PL/wasm extension.",
+				 NULL,
+				 &ectx.config.trace_threshold,
+				 0,
+				 0,
+				 5,
+				 PGC_SUSET,
+				 0,
+				 NULL,
+				 NULL,
+				 NULL);
+
    DefineCustomBoolVariable("plwasm.timing",
 				"Reports processing time information for PL/wasm extension.",
 				 NULL,

@@ -37,7 +37,7 @@ CALL_TRACE_WASM_FUNC_BEGIN(
   bufp += written;
   remains -= written;
   plwasm_wasm_vals_to_str(bufp, remains, args, nargs, ", ", "no args");
-  ereport(DEBUG1, (errmsg("%s", buf)));
+  CALL_DEBUG1(cctx, "%s", buf);
 }
 
 void
@@ -56,7 +56,7 @@ CALL_TRACE_WASM_FUNC_END(
   bufp += written;
   remains -= written;
   plwasm_wasm_vals_to_str(bufp, remains, results, nresults, ", ", "void");
-  ereport(DEBUG1, (errmsg("%s", buf)));
+  CALL_DEBUG1(cctx, "%s", buf);
 }
 
 void CALL_WASM_ERROR(

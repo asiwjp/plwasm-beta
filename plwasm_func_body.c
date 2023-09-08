@@ -91,7 +91,7 @@ void plwasm_func_body_parse(
   CALL_DEBUG5(cctx, "func config func=%s", cctx->func_config.func_name);
   CALL_DEBUG5(cctx, "func config enc=%s", cctx->func_config.string_enc_name);
   CALL_DEBUG5(cctx, "func config cache.instance.enabled=%d", cctx->func_config.cache.instance.enabled);
-  CALL_DEBUG5(cctx, "func config stats=%d", (int)(cctx->func_config.stats));
+  CALL_DEBUG5(cctx, "func config timing=%d", (int)(cctx->func_config.timing));
 
   cctx->func_config.string_enc = pg_char_to_encoding(cctx->func_config.string_enc_name);
   if (cctx->func_config.string_enc == -1) {
@@ -140,13 +140,25 @@ bool plwasm_func_body_parse_json_config(
   }
 
   CALL_DEBUG5(cctx, "function is with json config");
+
   jb_root = (Jsonb*) DirectFunctionCall1Coll(jsonb_in, DEFAULT_COLLATION_OID, (Datum)source);
-  cctx->func_config.file = plwasm_json_get_value_as_cstring(jb_root, "file", true);
-  cctx->func_config.func_name = plwasm_json_get_value_as_cstring(jb_root, "func", false);
-  cctx->func_config.string_enc_name = plwasm_json_get_value_as_cstring(jb_root, "enc", true);
-  cctx->func_config.trace = plwasm_json_get_value_as_bool(jb_root, "trace", false, false);
-  cctx->func_config.stats = plwasm_json_get_value_as_bool(jb_root, "stats", false, false);
-  cctx->func_config.cache.instance.enabled = plwasm_json_get_value_as_bool(jb_root, "cache.instance", false, true);
+  cctx->func_config.file = plwasm_json_get_value_as_cstring(
+    jb_root, "file", true);
+
+  cctx->func_config.func_name = plwasm_json_get_value_as_cstring(
+    jb_root, "func", false);
+
+  cctx->func_config.string_enc_name = plwasm_json_get_value_as_cstring(
+    jb_root, "enc", true);
+
+  cctx->func_config.trace = plwasm_json_get_value_as_bool(
+    jb_root, "trace", false, cctx->ectx->config.trace);
+
+  cctx->func_config.timing = plwasm_json_get_value_as_bool(
+    jb_root, "timing", false, cctx->ectx->config.timing);
+
+  cctx->func_config.cache.instance.enabled = plwasm_json_get_value_as_bool(
+    jb_root, "cache.instance", false, cctx->ectx->config.cache.instance.enabled);
 
   if (cctx->func_config.func_name == NULL) {
      cctx->func_config.func_name = pstrdup(proname);

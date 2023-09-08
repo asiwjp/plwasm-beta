@@ -5,6 +5,7 @@
 #include "plwasm_wasm_module.h"
 #include "plwasm_log.h"
 #include "postgres.h"
+#include "utils/guc.h"
 //#include "catalog/pg_proc.h"
 //#include "catalog/pg_type.h"
 #include "commands/event_trigger.h"
@@ -31,6 +32,39 @@ static Datum plwasm_func_handler(
 void
 _PG_init() {
    plwasm_extension_context_init(&ectx);
+
+   DefineCustomBoolVariable("plwasm.trace",
+				"Report trace information for PL/wasm extension.",
+				 NULL,
+				 &ectx.config.trace,
+				 false,
+				 PGC_SUSET,
+				 0,
+				 NULL,
+				 NULL,
+				 NULL);
+
+   DefineCustomBoolVariable("plwasm.timing",
+				"Reports processing time information for PL/wasm extension.",
+				 NULL,
+				 &ectx.config.timing,
+				 false,
+				 PGC_SUSET,
+				 0,
+				 NULL,
+				 NULL,
+				 NULL);
+
+   DefineCustomBoolVariable("plwasm.cache.instance",
+				"Enable caching of WASM module instances.",
+				 NULL,
+				 &ectx.config.cache.instance.enabled,
+				 false,
+				 PGC_SUSET,
+				 0,
+				 NULL,
+				 NULL,
+				 NULL);
    plwasm_wasm_engine_new(&ectx);
 }
 
@@ -41,8 +75,6 @@ plwasm_call_handler(PG_FUNCTION_ARGS)
     plwasm_call_context_t cctx;
     struct timespec begin_time;
  
-    cctx.func_config.stats = false;
-
     PG_TRY();
     {
       
@@ -67,7 +99,7 @@ plwasm_call_handler(PG_FUNCTION_ARGS)
     }
     PG_END_TRY();
 
-    if (cctx.func_config.stats) {
+    if (cctx.func_config.timing) {
       EXT_INFO(&ectx,
          "total=%1.3f[ms] (init=%f, load=%f, instantiate=%f, ep_find=%f, ep_invoke=%f, fn_find=%f, fn_invoke=%f, release=%f)",
          compute_elapsed_msec(&cctx.times.begin,   &cctx.times.ended),

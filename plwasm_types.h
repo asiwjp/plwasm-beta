@@ -56,7 +56,6 @@ typedef struct plwasm_func_cache_configs {
   plwasm_func_cache_config_t instance;
 } plwasm_func_cache_configs_t;
 
-
 typedef struct plwasm_func_config {
   char *file;
   char *func_name;
@@ -65,9 +64,15 @@ typedef struct plwasm_func_config {
   int   string_enc;
   bool  string_enc_required;
   bool trace;
-  bool stats;
+  bool timing;
   plwasm_func_cache_configs_t cache;
 } plwasm_func_config_t;
+
+typedef struct plwasm_extension_config {
+  bool trace;
+  bool timing;
+  plwasm_func_cache_configs_t cache;
+} plwasm_extension_config_t;
 
 typedef struct plwasm_hs_entry_cache_wasm_instance {
   Oid key;
@@ -122,9 +127,10 @@ typedef struct plwasm_times {
 typedef struct plwasm_extension_context {
   int				type;
   volatile MemoryContext	memctx;
+  plwasm_extension_config_t	config;
   wasm_engine_t			*engine;
   plwasm_wasm_runtime_t		rt;
-  plwasm_wasm_modules_t	 modules;
+  plwasm_wasm_modules_t		modules;
   HTAB				*wasm_module_cache;
   HTAB				*wasm_instance_cache;
 } plwasm_extension_context_t;

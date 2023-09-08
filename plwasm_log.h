@@ -27,7 +27,7 @@
   ereport(DEBUG5, (errmsg(__VA_ARGS__)));
 
 #define plwasm_log_stopwatch_begin(tm) clock_gettime(CLOCK_REALTIME, &(tm))
-#define plwasm_log_stopwatch_save(cctx, tm) if ((cctx)->func_config.stats) { clock_gettime(CLOCK_REALTIME, &(tm)); }
+#define plwasm_log_stopwatch_save(cctx, tm) if ((cctx)->func_config.timing) { clock_gettime(CLOCK_REALTIME, &(tm)); }
 
 double
 compute_elapsed_msec(

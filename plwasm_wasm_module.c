@@ -54,7 +54,7 @@ plwasm_wasm_module_load_with_cache(
     cctx->func_config.string_enc = cache_entry->config.string_enc;
     cctx->func_config.cache.instance = cache_entry->config.cache.instance;
     cctx->func_config.trace = cache_entry->config.trace;
-    cctx->func_config.stats = cache_entry->config.stats;
+    cctx->func_config.timing = cache_entry->config.timing;
     plwasm_log_stopwatch_save(cctx, cctx->times.loaded);
     return cache_entry->module;
   }
@@ -77,7 +77,7 @@ plwasm_wasm_module_load_with_cache(
   cache_entry->config.string_enc = cctx->func_config.string_enc;
   cache_entry->config.cache.instance = cctx->func_config.cache.instance;
   cache_entry->config.trace = cctx->func_config.trace;
-  cache_entry->config.stats = cctx->func_config.stats;
+  cache_entry->config.timing = cctx->func_config.timing;
   MemoryContextSwitchTo(old_memctx);
   plwasm_log_stopwatch_save(cctx, cctx->times.loaded);
   CALL_DEBUG5(cctx, "%s module cache was not found. func_name=%s", FUNC_NAME, cache_entry->config.func_name);

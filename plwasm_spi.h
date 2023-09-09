@@ -36,7 +36,7 @@ plwasm_spi_err_capture(
 );
 
 plwasm_pg_statement_context_t*
-plwasm_spi_statement_create(
+plwasm_spi_statement_new(
 	plwasm_call_context_t *cctx,
 	char *statement
 );

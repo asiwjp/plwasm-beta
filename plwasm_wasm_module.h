@@ -12,7 +12,7 @@ plwasm_wasm_module_load_with_cache(
 );
 
 wasmtime_module_t*
-plwasm_wasm_module_create(
+plwasm_wasm_module_new(
   plwasm_call_context_t *cctx,
   wasm_byte_vec_t *wasm
 );

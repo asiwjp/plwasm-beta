@@ -63,7 +63,7 @@ plwasm_wasm_module_load_with_cache(
   plwasm_func_body_describe(cctx, &(cctx->pg_proc), fn_oid);
   plwasm_func_body_parse(cctx, &(cctx->pg_proc));
   plwasm_wasm_load_wasm(cctx, &wasm, cctx->pg_proc.name);
-  cache_entry->module = plwasm_wasm_module_create(cctx, &wasm);
+  cache_entry->module = plwasm_wasm_module_new(cctx, &wasm);
   wasm_byte_vec_delete(&wasm);
 
   old_memctx = MemoryContextSwitchTo(cctx->ectx->memctx);
@@ -85,7 +85,7 @@ plwasm_wasm_module_load_with_cache(
 }
 
 wasmtime_module_t*
-plwasm_wasm_module_create(
+plwasm_wasm_module_new(
   	plwasm_call_context_t *cctx,
         wasm_byte_vec_t *wasm
 ) {

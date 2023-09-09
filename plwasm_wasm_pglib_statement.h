@@ -23,7 +23,7 @@ plwasm_wasm_pglib_query_text_unsafe(
 );
 
 wasm_trap_t*
-plwasm_wasm_pglib_statement_create_unsafe(
+plwasm_wasm_pglib_statement_new_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,

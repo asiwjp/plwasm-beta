@@ -16,7 +16,7 @@ spi_abort(
 );
 
 static plwasm_pg_statement_context_t*
-statement_context_vec_create(
+statement_context_vec_new(
 	int sz
 );
 
@@ -170,7 +170,7 @@ plwasm_spi_err_capture(
 }
 
 plwasm_pg_statement_context_t*
-plwasm_spi_statement_create(
+plwasm_spi_statement_new(
   plwasm_call_context_t *cctx,
   char *statement
 ) {
@@ -181,7 +181,7 @@ plwasm_spi_statement_create(
 	pg_verifymbstr(statement, strlen(statement), false);
 
 	if (cctx->spi.stmctx_vec == NULL) {
-        	cctx->spi.stmctx_vec = statement_context_vec_create(STATEMENT_CONTEXT_VEC_SZ);
+        	cctx->spi.stmctx_vec = statement_context_vec_new(STATEMENT_CONTEXT_VEC_SZ);
 		cctx->spi.stmctx_vec_sz = STATEMENT_CONTEXT_VEC_SZ;
 	}
 
@@ -415,7 +415,7 @@ plwasm_spi_query_scalar_as(
   PG_TRY();
   {
     plwasm_spi_internal_transaction_begin(cctx);
-    stmctx = plwasm_spi_statement_create(cctx, stmt_txt);
+    stmctx = plwasm_spi_statement_new(cctx, stmt_txt);
     plwasm_spi_statement_prepare(cctx, stmctx);
     plwasm_spi_statement_execute(cctx, stmctx, 1);
     if (!plwasm_spi_resultset_fetch(cctx, stmctx)) {
@@ -444,7 +444,7 @@ spi_abort(
 
 
 static plwasm_pg_statement_context_t*
-statement_context_vec_create(
+statement_context_vec_new(
 	int sz
 ) {
 	plwasm_pg_statement_context_t *stmctx_vec;

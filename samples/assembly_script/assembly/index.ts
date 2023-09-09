@@ -69,8 +69,8 @@ declare function pg_query_text_unsafe(
   stmt_buf_sz : i32
 ) : i32;
 
-@external("pg", "statement_create_unsafe")
-declare function pg_statement_create_unsafe(
+@external("pg", "statement_new_unsafe")
+declare function pg_statement_new_unsafe(
   stmt_buf : ArrayBuffer,
   stmt_buf_sz : i32
 ) : i32;
@@ -174,7 +174,7 @@ export function query_text() : void {
 export function fetch_int() : void {
   let ret : i32 = 0;
   const stmt_buf = String.UTF8.encode("select id from test limit 10", true);
-  const stmt_id = pg_statement_create_unsafe(stmt_buf, stmt_buf.byteLength);
+  const stmt_id = pg_statement_new_unsafe(stmt_buf, stmt_buf.byteLength);
   pg_statement_prepare(stmt_id);
   pg_statement_execute(stmt_id);
   while (pg_resultset_fetch(stmt_id)) {
@@ -193,7 +193,7 @@ export function fetch_int() : void {
 export function fetch_text() : void {
   let ret : i32 = 0;
   const stmt_buf = String.UTF8.encode("select id::text from test limit 10", true);
-  const stmt_id = pg_statement_create_unsafe(stmt_buf, stmt_buf.byteLength);
+  const stmt_id = pg_statement_new_unsafe(stmt_buf, stmt_buf.byteLength);
   pg_statement_prepare(stmt_id);
   pg_statement_execute(stmt_id);
   const fldbuf = new ArrayBuffer(8192);

@@ -87,7 +87,7 @@ plwasm_wasm_pglib_query_text_unsafe(
 
 
 wasm_trap_t*
-plwasm_wasm_pglib_statement_create_unsafe(
+plwasm_wasm_pglib_statement_new_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -95,7 +95,7 @@ plwasm_wasm_pglib_statement_create_unsafe(
     wasmtime_val_t *results,
     size_t nresults
 ) {
-  char *FUNC_NAME = "pg.statement_create_unsafe";
+  char *FUNC_NAME = "pg.statement_new_unsafe";
 
   plwasm_call_context_t *cctx;
   int		arg1_stmt_mem_offset;
@@ -110,7 +110,7 @@ plwasm_wasm_pglib_statement_create_unsafe(
   stmt_txt = plwasm_wasm_mem_get_string(cctx, arg1_stmt_mem_offset, arg2_stmt_mem_sz);
 
   plwasm_spi_ready(cctx);
-  stmctx = plwasm_spi_statement_create(cctx, stmt_txt);
+  stmctx = plwasm_spi_statement_new(cctx, stmt_txt);
 	
   results[0].of.i32 = stmctx->id;
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);

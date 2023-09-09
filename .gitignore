@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Samples
+samples/assembly_script/build
+samples/assembly_script/node_modules

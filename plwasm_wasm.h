@@ -2,11 +2,13 @@
 #define H_PLWASM_WASM
 
 #include "plwasm_types.h"
-#include "postgres.h"
 
-Datum plwasm_wasm_invoke(
-    plwasm_call_context_t *cctx,
-    char* proname,
-    Oid expect_ret_type);
+Datum
+plwasm_wasm_invoke(
+	plwasm_call_context_t *cctx,
+	wasmtime_instance_t *instance,
+	const char *func_name,
+	Oid expect_ret_type
+);
 
 #endif

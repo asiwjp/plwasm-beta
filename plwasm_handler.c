@@ -141,12 +141,16 @@ plwasm_func_handler(plwasm_call_context_t *cctx, PG_FUNCTION_ARGS)
 
 	plwasm_wasm_module_extra_init(cctx);
 
-	wasm_retval = plwasm_wasm_invoke(cctx, cctx->pg_proc.name, cctx->pg_proc.ret_type);
+	wasm_retval = plwasm_wasm_invoke(
+		cctx,
+		cctx->instance,
+		cctx->func_config.func_name,
+		cctx->pg_proc.ret_type);
 
-	if (cctx->pg_proc.ret_type == VOIDOID) {
-		PG_RETURN_NULL();
+	if (cctx->pg_proc.ret_type != VOIDOID) {
+		PG_RETURN_DATUM(wasm_retval);
 	}
 
-	PG_RETURN_DATUM(wasm_retval);
+	PG_RETURN_NULL();
 }
 

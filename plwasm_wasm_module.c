@@ -1,15 +1,10 @@
 #include "plwasm_wasm_module.h"
 #include "plwasm_func_body.h"
 #include "plwasm_log.h"
-#include "plwasm_utils_str.h"
-#include "plwasm_utils_json.h"
 #include "plwasm_wasm_pglib.h"
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <catalog/pg_collation_d.h>
-#include <mb/pg_wchar.h>
-#include <utils/jsonb.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define ENTRY_POINT_FUNC_NAME_REACTOR "_initialize"
 #define ENTRY_POINT_FUNC_NAME_START "_start"
@@ -289,35 +284,50 @@ void plwasm_wasm_load_file(
   plwasm_call_context_t *cctx,
   wasm_byte_vec_t *out,
   char *proname,
-  char *source) {
-
-  int source_len;
-  FILE *fp;
+  char *source)
+{
+  int fd;
+  int save_errno;
+  struct stat statbuf;
+  long source_len;
+  long readed = 0;
+  char *outbuf;
 
   CALL_DEBUG5(cctx, "load file. name=%s", source);
-  fp = fopen(source, "r");
-  if (fp == NULL) {
-    CALL_ERROR(cctx, "open failed. name=%s", source);
+  fd = open(source, O_RDONLY);
+  if (fd == -1) {
+    save_errno = errno;
+    CALL_ERROR(cctx, "open failed. file=%s, reason=%s", source, strerror(save_errno));
   }
 
-  if (fseek(fp, 0, SEEK_END) != 0) {
-    fclose(fp);
-    CALL_ERROR(cctx, "get file size failed. name=%s", source);
+  if (fstat(fd, &statbuf) == -1) {
+    save_errno = errno;
+    close(fd);
+    CALL_ERROR(cctx, "fstat failed. file=%s, reason=%s", source, strerror(save_errno));
   }
 
-  source_len = ftell(fp);
-  CALL_DEBUG5(cctx, "file size = %d", source_len);
-
-  if (fseek(fp, 0, SEEK_SET) != 0) {
-    fclose(fp);
-    CALL_ERROR(cctx, "rewind failed. name=%s", source);
-  }
+  source_len = statbuf.st_size;
+  CALL_DEBUG5(cctx, "file size = %ld", source_len);
 
   wasm_byte_vec_new_uninitialized(out, source_len);
-  fread(out->data, 1, source_len, fp);
-  if (ferror(fp) != 0) {
-    fclose(fp);
-    CALL_ERROR(cctx, "fread failed. name=%s", source);
-  }
-  fclose(fp);
+  outbuf = out->data;
+  do {
+    readed = read(fd, outbuf, source_len);
+    save_errno = errno;
+    CALL_DEBUG5(cctx, "readed = %ld", readed);
+
+    source_len -= readed;
+    if (source_len == 0) {
+      close(fd);
+      break;
+    }
+
+    if (readed == -1) {
+      close(fd);
+      CALL_ERROR(cctx, "read failed. file=%s, reason=%s", source, strerror(save_errno));
+    }
+
+    outbuf += readed;
+  } while (true);
 }
+

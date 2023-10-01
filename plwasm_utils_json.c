@@ -28,11 +28,20 @@ plwasm_json_get_value(
   char *path,
   bool required
 ) {
+#ifdef _MSC_VER
+  char *next = NULL;
+  char *p = strtok_s(pstrdup(path), ".", &next);
+#else
   char *p = strtok(pstrdup(path), ".");
+#endif
   JsonbValue *jv = plwasm_json_get_prop_value(jb, p, required);
   
   while (jv != NULL) {
+#ifdef _MSC_VER
+    p = strtok_s(NULL, ".", &next);
+#else
     p = strtok(NULL, ".");
+#endif
     if (p == NULL) {
       return jv;
     }

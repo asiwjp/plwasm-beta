@@ -174,7 +174,7 @@ plwasm_spi_statement_new(
   plwasm_call_context_t *cctx,
   char *statement
 ) {
-	plwasm_pg_statement_context_t	*stmctx;
+	plwasm_pg_statement_context_t	*stmctx = NULL;
 
 	CALL_DEBUG5(cctx, "SPI create statement. text=%s", statement);
 

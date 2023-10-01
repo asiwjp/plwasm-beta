@@ -9,6 +9,18 @@
 #define ENTRY_POINT_FUNC_NAME_REACTOR "_initialize"
 #define ENTRY_POINT_FUNC_NAME_START "_start"
 
+#ifdef _MSC_VER
+typedef struct _stat32 fd_stat_t;
+#define fd_stat _fstat32
+#define fd_read _read
+#define fd_close _close
+#else
+typedef struct stat fd_stat_t;
+#define fd_stat fstat
+#define fd_read read
+#define fd_close close
+#endif
+
 char*
 plwasm_wasm_find_entry_point(
 	plwasm_call_context_t *cctx,
@@ -288,43 +300,54 @@ void plwasm_wasm_load_file(
 {
   int fd;
   int save_errno;
-  struct stat statbuf;
-  long source_len;
-  long readed = 0;
+  fd_stat_t statbuf;
+  int32_t source_len;
+  int32_t readed = 0;
   char *outbuf;
 
   CALL_DEBUG5(cctx, "load file. name=%s", source);
+#ifdef _MSC_VER
+  _sopen_s(&fd, source, _O_RDONLY | _O_BINARY, _SH_DENYWR, _S_IREAD);
+#else
   fd = open(source, O_RDONLY);
+#endif
   if (fd == -1) {
     save_errno = errno;
-    CALL_ERROR(cctx, "open failed. file=%s, reason=%s", source, strerror(save_errno));
+    CALL_ERROR(cctx, "open failed. file=%s, reason=%s",
+        source, strerror(save_errno));
   }
 
-  if (fstat(fd, &statbuf) == -1) {
+  if (fd_stat(fd, &statbuf) == -1) {
     save_errno = errno;
-    close(fd);
-    CALL_ERROR(cctx, "fstat failed. file=%s, reason=%s", source, strerror(save_errno));
+    fd_close(fd);
+    CALL_ERROR(cctx, "fstat failed. file=%s, reason=%s",
+        source, strerror(save_errno));
   }
 
+  if (statbuf.st_size >= INT32_MAX) {
+    CALL_ERROR(cctx, "File size is too large. file=%s",
+        source);
+  }
   source_len = statbuf.st_size;
-  CALL_DEBUG5(cctx, "file size = %ld", source_len);
+  CALL_DEBUG5(cctx, "file size = %d", source_len);
 
   wasm_byte_vec_new_uninitialized(out, source_len);
   outbuf = out->data;
   do {
-    readed = read(fd, outbuf, source_len);
+    readed = fd_read(fd, outbuf, source_len);
     save_errno = errno;
-    CALL_DEBUG5(cctx, "readed = %ld", readed);
+    CALL_DEBUG5(cctx, "readed = %d", readed);
 
     source_len -= readed;
     if (source_len == 0) {
-      close(fd);
+      fd_close(fd);
       break;
     }
 
     if (readed == -1) {
-      close(fd);
-      CALL_ERROR(cctx, "read failed. file=%s, reason=%s", source, strerror(save_errno));
+      fd_close(fd);
+      CALL_ERROR(cctx, "read failed. file=%s, reason=%s",
+          source, strerror(save_errno));
     }
 
     outbuf += readed;

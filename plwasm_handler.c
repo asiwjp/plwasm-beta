@@ -20,7 +20,8 @@ PG_FUNCTION_INFO_V1(plwasm_call_handler);
 
 static plwasm_extension_context_t ectx;
 
-Datum plwasm_call_handler(
+PGDLLEXPORT Datum
+plwasm_call_handler(
   PG_FUNCTION_ARGS
 );
 
@@ -29,7 +30,7 @@ static Datum plwasm_func_handler(
   PG_FUNCTION_ARGS
 );
 
-void
+PGDLLEXPORT void
 _PG_init() {
    plwasm_extension_context_init(&ectx);
 
@@ -81,7 +82,7 @@ _PG_init() {
    plwasm_wasm_engine_new(&ectx);
 }
 
-Datum
+PGDLLEXPORT Datum
 plwasm_call_handler(PG_FUNCTION_ARGS)
 {
     Datum retval = (Datum) 0;

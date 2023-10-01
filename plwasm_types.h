@@ -12,10 +12,13 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+#ifdef _MSC_VER
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 #include <wasm.h>
 #include <wasmtime.h>
-
 
 typedef struct plwasm_pg_cursor_context {
 	Portal		portal;

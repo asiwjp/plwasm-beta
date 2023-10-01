@@ -29,8 +29,16 @@
 #define EXT_DEBUG5(ectx, ...) \
   if ((ectx)->config.trace && (ectx)->config.trace_threshold == 5) ereport(DEBUG1, (errmsg(__VA_ARGS__)));
 
+#ifdef _MSC_VER
+#define plwasm_log_stopwatch_begin(tm) timespec_get(&(tm), TIME_UTC)
+#define plwasm_log_stopwatch_save(cctx, tm) \
+  if ((cctx)->func_config.timing) { \
+    timespec_get(&(tm), TIME_UTC);  \
+  }
+#else
 #define plwasm_log_stopwatch_begin(tm) clock_gettime(CLOCK_REALTIME, &(tm))
 #define plwasm_log_stopwatch_save(cctx, tm) if ((cctx)->func_config.timing) { clock_gettime(CLOCK_REALTIME, &(tm)); }
+#endif
 
 double
 compute_elapsed_msec(

@@ -1,0 +1,7 @@
+# PL/wasm extension
+comment = 'PL/wasm procedural language'
+default_version = '0.1'
+module_pathname = '$libdir/plwasm'
+relocatable = false
+schema = pg_catalog
+superuser = true

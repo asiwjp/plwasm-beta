@@ -27,7 +27,7 @@ void plwasm_wasm_engine_new(plwasm_extension_context_t *ectx) {
   if (ectx->rt.context == NULL)
     EXT_WASM_ERROR(ectx, "failed to create context", NULL, NULL);
 
-  ectx->memctx = AllocSetContextCreate(CacheMemoryContext,
+  ectx->memctx = AllocSetContextCreate(TopMemoryContext,
 		 "PL/WebAssembly cache context",
 		 ALLOCSET_SMALL_SIZES);
 

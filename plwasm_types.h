@@ -107,6 +107,7 @@ typedef struct plwasm_wasm_ret {
   Oid type;
   union {
     int32_t i32;
+    int64_t i64;
     struct {
       char *ptr;
       int size;

@@ -30,6 +30,7 @@ plwasm_wasm_invoke(
      || expect_ret_type == CSTRINGOID
      || expect_ret_type == BYTEAOID
      || expect_ret_type == INT4OID
+     || expect_ret_type == INT8OID
      || expect_ret_type == VOIDOID
   ) {
     nresults = 0;
@@ -84,6 +85,11 @@ plwasm_wasm_invoke(
   if (expect_ret_type == INT4OID) {
     CALL_DEBUG5(cctx, "%s return %d", func_name, cctx->ret.of.i32);
     PG_RETURN_INT32(cctx->ret.of.i32);
+  }
+
+  if (expect_ret_type == INT8OID) {
+    CALL_DEBUG5(cctx, "%s return %ld", func_name, cctx->ret.of.i64);
+    PG_RETURN_INT64(cctx->ret.of.i64);
   }
 
   if (nresults == 0) {

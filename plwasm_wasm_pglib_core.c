@@ -98,6 +98,36 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_int32(
   return NULL;
 }
 
+wasm_trap_t* plwasm_wasm_pglib_args_get_int64(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.args_get_int64";
+
+  plwasm_call_context_t *cctx;
+  FunctionCallInfo fcinfo;
+  int32_t arg1_pgarg_idx;
+  int64_t pgarg_int;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  fcinfo = cctx->fcinfo;
+  arg1_pgarg_idx= args[0].of.i32;
+
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg1_pgarg_idx);
+
+  pgarg_int = PG_GETARG_INT64(arg1_pgarg_idx);
+
+  results[0].kind = WASMTIME_I64;
+  results[0].of.i64 = pgarg_int;
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
 wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,
@@ -243,6 +273,28 @@ wasm_trap_t* plwasm_wasm_pglib_returns_set_int32(
 
   cctx->ret.type = INT4OID;
   cctx->ret.of.i32 = arg1_retval;
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t* plwasm_wasm_pglib_returns_set_int64(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.returns_set_int64";
+
+  plwasm_call_context_t *cctx;
+  int64_t arg1_retval;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_retval = args[0].of.i64;
+
+  cctx->ret.type = INT8OID;
+  cctx->ret.of.i64 = arg1_retval;
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }

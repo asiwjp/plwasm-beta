@@ -52,6 +52,13 @@ $${
   "func": "ret_int"
 }$$;
 
+create or replace function plwasm_assembly_script_ret_bigint(p1 bigint) returns bigint language plwasm as
+$${
+  "file": "plwasm/assembly_script.wasm",
+  "enc": "utf-8",
+  "func": "ret_bigint"
+}$$;
+
 create or replace function plwasm_assembly_script_ret_text(p1 text) returns text language plwasm as
 $${
   "file": "plwasm/assembly_script.wasm",
@@ -59,7 +66,7 @@ $${
   "func": "ret_text"
 }$$;
 
-create or replace function plwasm_assembly_script_fetch_int(p1 int) returns int language plwasm as
+create or replace function plwasm_assembly_script_fetch_int(p1 int) returns bigint language plwasm as
 $${
   "file": "plwasm/assembly_script.wasm",
   "enc": "utf-8",

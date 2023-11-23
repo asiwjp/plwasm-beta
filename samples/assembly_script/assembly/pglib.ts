@@ -18,6 +18,11 @@ export declare function args_get_int32(
   index : i32
 ) : i32;
 
+@external("pg", "args_get_int64")
+export declare function args_get_int64(
+  index : i32
+) : i64;
+
 @external("pg", "args_get_text_unsafe")
 export declare function args_get_text_unsafe(
   buf : ArrayBuffer,
@@ -43,6 +48,11 @@ export declare function returns_set_null(
 @external("pg", "returns_set_int32")
 export declare function returns_set_int32(
   value : i32
+) : void;
+
+@external("pg", "returns_set_int64")
+export declare function returns_set_int64(
+  value : i64
 ) : void;
 
 @external("pg", "returns_set_text_unsafe")
@@ -109,6 +119,12 @@ export declare function resultset_get_int32(
   stmt_id : i32,
   fld_idx : i32
 ) : i32;
+
+@external("pg", "resultset_get_int64")
+export declare function resultset_get_int64(
+  stmt_id : i32,
+  fld_idx : i32
+) : i64;
 
 @external("pg", "resultset_get_text_unsafe")
 export declare function resultset_get_text_unsafe(

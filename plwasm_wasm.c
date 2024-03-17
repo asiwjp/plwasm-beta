@@ -31,6 +31,8 @@ plwasm_wasm_invoke(
      || expect_ret_type == BYTEAOID
      || expect_ret_type == INT4OID
      || expect_ret_type == INT8OID
+     || expect_ret_type == FLOAT4OID
+     || expect_ret_type == FLOAT8OID
      || expect_ret_type == VOIDOID
   ) {
     nresults = 0;
@@ -92,6 +94,15 @@ plwasm_wasm_invoke(
     PG_RETURN_INT64(cctx->ret.of.i64);
   }
 
+  if (expect_ret_type == FLOAT4OID) {
+    CALL_DEBUG5(cctx, "%s return %f", func_name, cctx->ret.of.f32);
+    PG_RETURN_FLOAT4(cctx->ret.of.f32);
+  }
+
+  if (expect_ret_type == FLOAT8OID) {
+    CALL_DEBUG5(cctx, "%s return %lf", func_name, cctx->ret.of.f64);
+    PG_RETURN_FLOAT8(cctx->ret.of.f64);
+  }
   if (nresults == 0) {
     CALL_DEBUG5(cctx, "%s return null", func_name);
     PG_RETURN_NULL();

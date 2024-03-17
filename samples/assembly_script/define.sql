@@ -59,6 +59,20 @@ $${
   "func": "ret_bigint"
 }$$;
 
+create or replace function plwasm_assembly_script_ret_real(p1 real) returns real language plwasm as
+$${
+  "file": "plwasm/assembly_script.wasm",
+  "enc": "utf-8",
+  "func": "ret_real"
+}$$;
+
+create or replace function plwasm_assembly_script_ret_double(p1 double precision) returns double precision language plwasm as
+$${
+  "file": "plwasm/assembly_script.wasm",
+  "enc": "utf-8",
+  "func": "ret_double"
+}$$;
+
 create or replace function plwasm_assembly_script_ret_text(p1 text) returns text language plwasm as
 $${
   "file": "plwasm/assembly_script.wasm",
@@ -66,16 +80,9 @@ $${
   "func": "ret_text"
 }$$;
 
-create or replace function plwasm_assembly_script_fetch_int(p1 int) returns bigint language plwasm as
+create or replace function plwasm_assembly_script_fetch(p1 int) returns bigint language plwasm as
 $${
   "file": "plwasm/assembly_script.wasm",
   "enc": "utf-8",
-  "func": "fetch_int"
-}$$;
-
-create or replace function plwasm_assembly_script_fetch_text(p1 int) returns int language plwasm as
-$${
-  "file": "plwasm/assembly_script.wasm",
-  "enc": "utf-8",
-  "func": "fetch_text"
+  "func": "fetch"
 }$$;

@@ -108,6 +108,8 @@ typedef struct plwasm_wasm_ret {
   union {
     int32_t i32;
     int64_t i64;
+    float f32;
+    double f64;
     struct {
       char *ptr;
       int size;

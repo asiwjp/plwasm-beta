@@ -23,6 +23,16 @@ export declare function args_get_int64(
   index : i32
 ) : i64;
 
+@external("pg", "args_get_float32")
+export declare function args_get_float32(
+  index : i32
+) : f32;
+
+@external("pg", "args_get_float64")
+export declare function args_get_float64(
+  index : i32
+) : f64;
+
 @external("pg", "args_get_text_unsafe")
 export declare function args_get_text_unsafe(
   buf : ArrayBuffer,
@@ -53,6 +63,16 @@ export declare function returns_set_int32(
 @external("pg", "returns_set_int64")
 export declare function returns_set_int64(
   value : i64
+) : void;
+
+@external("pg", "returns_set_float32")
+export declare function returns_set_float32(
+  value : f32
+) : void;
+
+@external("pg", "returns_set_float64")
+export declare function returns_set_float64(
+  value : f64
 ) : void;
 
 @external("pg", "returns_set_text_unsafe")
@@ -125,6 +145,18 @@ export declare function resultset_get_int64(
   stmt_id : i32,
   fld_idx : i32
 ) : i64;
+
+@external("pg", "resultset_get_float32")
+export declare function resultset_get_float32(
+  stmt_id : i32,
+  fld_idx : i32
+) : f32;
+
+@external("pg", "resultset_get_float64")
+export declare function resultset_get_float64(
+  stmt_id : i32,
+  fld_idx : i32
+) : f64;
 
 @external("pg", "resultset_get_text_unsafe")
 export declare function resultset_get_text_unsafe(

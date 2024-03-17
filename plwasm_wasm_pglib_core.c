@@ -128,6 +128,66 @@ wasm_trap_t* plwasm_wasm_pglib_args_get_int64(
   return NULL;
 }
 
+wasm_trap_t* plwasm_wasm_pglib_args_get_float32(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.args_get_float32";
+
+  plwasm_call_context_t *cctx;
+  FunctionCallInfo fcinfo;
+  int32_t arg1_pgarg_idx;
+  float pgarg_val;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  fcinfo = cctx->fcinfo;
+  arg1_pgarg_idx= args[0].of.i32;
+
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg1_pgarg_idx);
+
+  pgarg_val = PG_GETARG_FLOAT4(arg1_pgarg_idx);
+
+  results[0].kind = WASMTIME_F32;
+  results[0].of.f32 = pgarg_val;
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t* plwasm_wasm_pglib_args_get_float64(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.args_get_float64";
+
+  plwasm_call_context_t *cctx;
+  FunctionCallInfo fcinfo;
+  int32_t arg1_pgarg_idx;
+  double pgarg_val;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  fcinfo = cctx->fcinfo;
+  arg1_pgarg_idx= args[0].of.i32;
+
+  plwasm_utils_pg_proc_check_arg_index(cctx, fcinfo, arg1_pgarg_idx);
+
+  pgarg_val = PG_GETARG_FLOAT8(arg1_pgarg_idx);
+
+  results[0].kind = WASMTIME_F64;
+  results[0].of.f64 = pgarg_val;
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
 wasm_trap_t* plwasm_wasm_pglib_args_get_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,
@@ -295,6 +355,50 @@ wasm_trap_t* plwasm_wasm_pglib_returns_set_int64(
 
   cctx->ret.type = INT8OID;
   cctx->ret.of.i64 = arg1_retval;
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t* plwasm_wasm_pglib_returns_set_float32(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.returns_set_float32";
+
+  plwasm_call_context_t *cctx;
+  float arg1_retval;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_retval = args[0].of.f32;
+
+  cctx->ret.type = FLOAT4OID;
+  cctx->ret.of.f32 = arg1_retval;
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t* plwasm_wasm_pglib_returns_set_float64(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.returns_set_float64";
+
+  plwasm_call_context_t *cctx;
+  double arg1_retval;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_retval = args[0].of.f64;
+
+  cctx->ret.type = FLOAT8OID;
+  cctx->ret.of.f64 = arg1_retval;
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }

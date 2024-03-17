@@ -145,6 +145,86 @@ plwasm_wasm_pglib_resultset_get_int64(
 }
 
 wasm_trap_t*
+plwasm_wasm_pglib_resultset_get_float32(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.resultset_get_float32";
+
+  plwasm_call_context_t	*cctx;
+  plwasm_pg_statement_context_t	*stmctx;
+  int		arg1_stmt_id;
+  int		arg2_fld_idx;
+  Datum		val;
+  bool		is_null;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_stmt_id  = args[0].of.i32;
+  arg2_fld_idx = args[1].of.i32;
+
+  stmctx = plwasm_spi_statement_get_context(cctx, arg1_stmt_id);
+  val = plwasm_spi_resultset_get_val_as(cctx, stmctx, arg2_fld_idx, FLOAT4OID, &is_null);
+  if (is_null) {
+    CALL_ERROR(
+      cctx,
+      "%s column value is null. statement_index=%d, field_index=%d",
+      FUNC_NAME,
+      arg1_stmt_id,
+      arg2_fld_idx);
+  }
+
+  results[0].kind = WASMTIME_F32;
+  results[0].of.f32 = DatumGetFloat4(val);
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t*
+plwasm_wasm_pglib_resultset_get_float64(
+    void *env,
+    wasmtime_caller_t *caller,
+    const wasmtime_val_t *args,
+    size_t nargs,
+    wasmtime_val_t *results,
+    size_t nresults
+) {
+  char *FUNC_NAME = "pg.resultset_get_float64";
+
+  plwasm_call_context_t	*cctx;
+  plwasm_pg_statement_context_t	*stmctx;
+  int		arg1_stmt_id;
+  int		arg2_fld_idx;
+  Datum		val;
+  bool		is_null;
+
+  cctx = plwasm_wasm_func_begin(caller, FUNC_NAME, args, nargs);
+  arg1_stmt_id  = args[0].of.i32;
+  arg2_fld_idx = args[1].of.i32;
+
+  stmctx = plwasm_spi_statement_get_context(cctx, arg1_stmt_id);
+  val = plwasm_spi_resultset_get_val_as(cctx, stmctx, arg2_fld_idx, FLOAT8OID, &is_null);
+  if (is_null) {
+    CALL_ERROR(
+      cctx,
+      "%s column value is null. statement_index=%d, field_index=%d",
+      FUNC_NAME,
+      arg1_stmt_id,
+      arg2_fld_idx);
+  }
+
+  results[0].kind = WASMTIME_F64;
+  results[0].of.f64 = DatumGetFloat8(val);
+
+  plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
+  return NULL;
+}
+
+wasm_trap_t*
 plwasm_wasm_pglib_resultset_get_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,

@@ -83,6 +83,26 @@ plwasm_wasm_pglib_load(
     ectx,
     WASM_MODULE_NAME,
     WASM_MODULE_NAME_LEN,
+    "args_get_float32",
+    plwasm_wasm_pglib_args_get_float32,
+    wasm_valtype_new_f32(),
+    1,
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "args_get_float64",
+    plwasm_wasm_pglib_args_get_float64,
+    wasm_valtype_new_f64(),
+    1,
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
     "args_get_text_unsafe",
     plwasm_wasm_pglib_args_get_text_unsafe,
     wasm_valtype_new_i32(),
@@ -132,6 +152,24 @@ plwasm_wasm_pglib_load(
     plwasm_wasm_pglib_returns_set_int64,
     1,
     wasm_valtype_new_i64());
+
+  plwasm_wasm_define_func_0(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "returns_set_float32",
+    plwasm_wasm_pglib_returns_set_float32,
+    1,
+    wasm_valtype_new_f32());
+
+  plwasm_wasm_define_func_0(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "returns_set_float64",
+    plwasm_wasm_pglib_returns_set_float64,
+    1,
+    wasm_valtype_new_f64());
 
   plwasm_wasm_define_func_0(
     ectx,
@@ -263,6 +301,28 @@ plwasm_wasm_pglib_load(
     "resultset_get_int64",
     plwasm_wasm_pglib_resultset_get_int64,
     wasm_valtype_new_i64(),
+    2,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "resultset_get_float32",
+    plwasm_wasm_pglib_resultset_get_float32,
+    wasm_valtype_new_f32(),
+    2,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "resultset_get_float64",
+    plwasm_wasm_pglib_resultset_get_float64,
+    wasm_valtype_new_f64(),
     2,
     wasm_valtype_new_i32(),
     wasm_valtype_new_i32());

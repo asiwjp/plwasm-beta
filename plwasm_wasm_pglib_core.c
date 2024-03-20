@@ -7,7 +7,11 @@
 #include <postgres.h>
 #include <mb/pg_wchar.h>
 
-wasm_trap_t* plwasm_wasm_pglib_log_unsafe(
+#define WASM_MODULE_NAME "pg"
+#define WASM_MODULE_NAME_LEN 2
+
+static wasm_trap_t*
+plwasm_wasm_pglib_log_unsafe(
     void *env,
     wasmtime_caller_t *caller,
     const wasmtime_val_t *args,
@@ -39,3 +43,20 @@ wasm_trap_t* plwasm_wasm_pglib_log_unsafe(
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
 }
+
+void
+plwasm_wasm_pglib_core_load(
+    plwasm_extension_context_t *ectx
+) {
+  plwasm_wasm_define_func_0(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "log_unsafe",
+    plwasm_wasm_pglib_log_unsafe,
+    3,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+}
+

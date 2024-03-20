@@ -6,7 +6,10 @@
 #include "plwasm_utils_str.h"
 #include "plwasm_log.h"
 
-wasm_trap_t*
+#define WASM_MODULE_NAME "pg"
+#define WASM_MODULE_NAME_LEN 2
+
+static wasm_trap_t*
 plwasm_wasm_pglib_query_int32_unsafe(
     void *env,
     wasmtime_caller_t *caller,
@@ -39,7 +42,7 @@ plwasm_wasm_pglib_query_int32_unsafe(
   return NULL;
 }
 
-wasm_trap_t*
+static wasm_trap_t*
 plwasm_wasm_pglib_query_text_unsafe(
     void *env,
     wasmtime_caller_t *caller,
@@ -86,7 +89,7 @@ plwasm_wasm_pglib_query_text_unsafe(
 }
 
 
-wasm_trap_t*
+static wasm_trap_t*
 plwasm_wasm_pglib_statement_new_unsafe(
     void *env,
     wasmtime_caller_t *caller,
@@ -117,7 +120,7 @@ plwasm_wasm_pglib_statement_new_unsafe(
   return NULL;
 }
 
-wasm_trap_t*
+static wasm_trap_t*
 plwasm_wasm_pglib_statement_prepare(
     void *env,
     wasmtime_caller_t *caller,
@@ -142,7 +145,7 @@ plwasm_wasm_pglib_statement_prepare(
   return NULL;
 }
 
-wasm_trap_t*
+static wasm_trap_t*
 plwasm_wasm_pglib_statement_execute(
     void *env,
     wasmtime_caller_t *caller,
@@ -170,7 +173,7 @@ plwasm_wasm_pglib_statement_execute(
   return NULL;
 }
 
-wasm_trap_t*
+static wasm_trap_t*
 plwasm_wasm_pglib_statement_close(
     void *env,
     wasmtime_caller_t *caller,
@@ -195,4 +198,73 @@ plwasm_wasm_pglib_statement_close(
   results[0].of.i32 = result;
   plwasm_wasm_func_end(cctx, FUNC_NAME, results, nresults);
   return NULL;
+}
+
+void
+plwasm_wasm_pglib_statement_load(
+    plwasm_extension_context_t *ectx
+) {
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "query_int32_unsafe",
+    plwasm_wasm_pglib_query_int32_unsafe,
+    wasm_valtype_new_i32(),
+    2,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "query_text_unsafe",
+    plwasm_wasm_pglib_query_text_unsafe,
+    wasm_valtype_new_i32(),
+    4,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "statement_new_unsafe",
+    plwasm_wasm_pglib_statement_new_unsafe,
+    wasm_valtype_new_i32(),
+    2,
+    wasm_valtype_new_i32(),
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_0(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "statement_prepare",
+    plwasm_wasm_pglib_statement_prepare,
+    1,
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "statement_execute",
+    plwasm_wasm_pglib_statement_execute,
+    wasm_valtype_new_i64(),
+    1,
+    wasm_valtype_new_i32());
+
+  plwasm_wasm_define_func_1(
+    ectx,
+    WASM_MODULE_NAME,
+    WASM_MODULE_NAME_LEN,
+    "statement_close",
+    plwasm_wasm_pglib_statement_close,
+    wasm_valtype_new_i32(),
+    1,
+    wasm_valtype_new_i32());
 }

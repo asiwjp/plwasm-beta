@@ -8,6 +8,8 @@ OBJS = \
   plwasm_wasm_memory.o \
   plwasm_wasm_module.o \
   plwasm_wasm_pglib_core.o \
+  plwasm_wasm_pglib_args.o \
+  plwasm_wasm_pglib_returns.o \
   plwasm_wasm_pglib_statement.o \
   plwasm_wasm_pglib_resultset.o \
   plwasm_wasm_pglib.o \

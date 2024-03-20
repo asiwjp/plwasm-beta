@@ -1,5 +1,7 @@
 #include "plwasm_wasm_pglib.h"
 #include "plwasm_wasm_pglib_core.h"
+#include "plwasm_wasm_pglib_args.h"
+#include "plwasm_wasm_pglib_returns.h"
 #include "plwasm_wasm_pglib_statement.h"
 #include "plwasm_wasm_pglib_resultset.h"
 #include "plwasm_wasm_memory.h"

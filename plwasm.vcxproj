@@ -158,8 +158,10 @@
     <ClInclude Include="plwasm_wasm_memory.h" />
     <ClInclude Include="plwasm_wasm_module.h" />
     <ClInclude Include="plwasm_wasm_pglib.h" />
+    <ClInclude Include="plwasm_wasm_pglib_args.h" />
     <ClInclude Include="plwasm_wasm_pglib_core.h" />
     <ClInclude Include="plwasm_wasm_pglib_resultset.h" />
+    <ClInclude Include="plwasm_wasm_pglib_returns.h" />
     <ClInclude Include="plwasm_wasm_pglib_statement.h" />
     <ClInclude Include="plwasm_wasm_utils.h" />
   </ItemGroup>
@@ -177,8 +179,10 @@
     <ClCompile Include="plwasm_wasm_memory.c" />
     <ClCompile Include="plwasm_wasm_module.c" />
     <ClCompile Include="plwasm_wasm_pglib.c" />
+    <ClCompile Include="plwasm_wasm_pglib_args.c" />
     <ClCompile Include="plwasm_wasm_pglib_core.c" />
     <ClCompile Include="plwasm_wasm_pglib_resultset.c" />
+    <ClCompile Include="plwasm_wasm_pglib_returns.c" />
     <ClCompile Include="plwasm_wasm_pglib_statement.c" />
     <ClCompile Include="plwasm_wasm_utils.c" />
   </ItemGroup>
